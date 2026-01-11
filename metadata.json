@@ -1,0 +1,5 @@
+{
+  "name": "FinVault Dashboard",
+  "description": "A secure, Swiss-style personal finance dashboard for tracking 50-30-20 budgets and stock portfolios with n8n integration points.",
+  "requestFramePermissions": []
+}
