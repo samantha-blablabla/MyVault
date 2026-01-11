@@ -7,7 +7,8 @@ export enum AssetType {
 export enum TransactionType {
   BUY = 'BUY',
   SELL = 'SELL',
-  DIVIDEND = 'DIVIDEND'
+  DIVIDEND = 'DIVIDEND',
+  EXPENSE = 'EXPENSE'
 }
 
 export interface Transaction {
@@ -16,7 +17,7 @@ export interface Transaction {
   symbol: string;
   type: TransactionType;
   quantity: number;
-  price: number; // Price per share or Total Dividend amount
+  price: number; // Price per share or Total Dividend amount or Expense Amount
   notes?: string;
 }
 

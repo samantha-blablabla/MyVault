@@ -8,7 +8,8 @@ import { GlassCard } from './ui/GlassCard';
 import { DailySpendableWidget } from './DailySpendableWidget';
 import { InvestmentRoadmap } from './InvestmentRoadmap';
 import { TransactionModal } from './TransactionModal';
-import { ShieldCheck, LogOut, TrendingUp, Plus } from 'lucide-react';
+import { ExpenseModal } from './ExpenseModal'; // Import new modal
+import { ShieldCheck, LogOut, TrendingUp, Plus, Zap } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 interface DashboardProps {
@@ -18,8 +19,9 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   // Use Global State from Context
-  const { portfolio, addTransaction } = useFinance();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { portfolio, addTransaction, addExpense } = useFinance();
+  const [isTransModalOpen, setIsTransModalOpen] = useState(false);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
   const totalNetWorth = portfolio.reduce((acc, stock) => acc + (stock.quantity * stock.currentPrice), 0) + 
                         INITIAL_BUDGET.find(b => b.id === 'savings')?.allocated!; 
@@ -28,13 +30,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   const fundAssets = portfolio.filter(s => s.type === AssetType.Fund);
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 animate-fade-in pb-20 md:pb-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 animate-fade-in pb-24 md:pb-8">
       
-      {/* Transaction Modal */}
+      {/* Transaction Modal (Stocks) */}
       <TransactionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        isOpen={isTransModalOpen} 
+        onClose={() => setIsTransModalOpen(false)} 
         onSubmit={addTransaction} 
+      />
+
+      {/* Expense Modal (Quick Add) */}
+      <ExpenseModal
+        isOpen={isExpenseModalOpen}
+        onClose={() => setIsExpenseModalOpen(false)}
+        onSubmit={addExpense}
       />
 
       {/* Top Bar */}
@@ -82,7 +91,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                     Danh mục Đầu tư (Real-time)
                 </h2>
                 <button 
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => setIsTransModalOpen(true)}
                   className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
                 >
                     <Plus size={14} />
@@ -128,6 +137,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             </GlassCard>
         </div>
 
+      </div>
+
+      {/* Mobile Floating Action Button (Quick Add) */}
+      <div className="fixed bottom-6 right-6 md:hidden z-40">
+          <button 
+            onClick={() => setIsExpenseModalOpen(true)}
+            className="w-14 h-14 rounded-full bg-white text-black shadow-2xl shadow-emerald-500/20 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+          >
+              <Zap size={24} fill="currentColor" />
+          </button>
       </div>
     </div>
   );

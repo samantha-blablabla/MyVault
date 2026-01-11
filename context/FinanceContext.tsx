@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StockData, BudgetCategory, FixedBill, Transaction, UserState } from '../types';
+import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType } from '../types';
 import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS } from '../constants';
-import { processPortfolioFromTransactions, calculateDailySpendable } from '../services/financeLogic';
+import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats } from '../services/financeLogic';
+
+interface SpendingStats {
+    day: number;
+    month: number;
+    year: number;
+}
 
 interface FinanceContextType {
   // State
@@ -10,9 +16,11 @@ interface FinanceContextType {
   fixedBills: FixedBill[];
   dailySpendable: number;
   daysRemaining: number;
+  spendingStats: SpendingStats;
   
   // Actions
   addTransaction: (tx: Transaction) => void;
+  addExpense: (amount: number, note: string) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
   refreshPrices: () => void; // Simulate n8n sync
 }
@@ -26,6 +34,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [portfolio, setPortfolio] = useState<StockData[]>([]);
   const [dailySpendable, setDailySpendable] = useState(0);
   const [daysRemaining, setDaysRemaining] = useState(0);
+  const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0 });
 
   // 1. Recalculate Portfolio whenever transactions change
   useEffect(() => {
@@ -38,6 +47,11 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         });
     }
     setPortfolio(calculatedPortfolio);
+
+    // Calculate Spending Stats
+    const stats = calculateSpendingStats(transactions);
+    setSpendingStats(stats);
+
   }, [transactions]);
 
   // 2. Recalculate Daily Spendable
@@ -53,6 +67,29 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Actions
   const addTransaction = (tx: Transaction) => {
     setTransactions(prev => [...prev, tx]);
+  };
+
+  const addExpense = (amount: number, note: string) => {
+    // 1. Update the 'spent' amount for 'needs' category in Budget View
+    setBudget(prev => prev.map(cat => 
+        cat.id === 'needs' 
+            ? { ...cat, spent: cat.spent + amount } 
+            : cat
+    ));
+
+    // 2. Create a Transaction record for History & Stats
+    const expenseTx: Transaction = {
+        id: `exp-${Date.now()}`,
+        date: new Date().toISOString(),
+        symbol: 'EXP', // Dummy symbol
+        type: TransactionType.EXPENSE,
+        quantity: 1,
+        price: amount,
+        notes: note
+    };
+    
+    setTransactions(prev => [...prev, expenseTx]);
+    console.log(`Expense added: ${amount} for ${note}`);
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
@@ -72,7 +109,9 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       fixedBills,
       dailySpendable,
       daysRemaining,
+      spendingStats,
       addTransaction,
+      addExpense,
       updateBillStatus,
       refreshPrices
     }}>

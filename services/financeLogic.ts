@@ -30,11 +30,36 @@ export const calculateDailySpendable = (
 };
 
 /**
- * Suggests carry-over amount. 
- * If remaining > 0, suggest moving to Invest/Savings.
+ * Calculates detailed spending stats (Day, Month, Year) from transaction history
  */
-export const calculateCarryOver = (budgetLimit: number, totalSpent: number): number => {
-    return Math.max(0, budgetLimit - totalSpent);
+export const calculateSpendingStats = (transactions: Transaction[]) => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-indexed
+    const currentDate = today.getDate();
+
+    let day = 0;
+    let month = 0;
+    let year = 0;
+
+    transactions.forEach(tx => {
+        if (tx.type === TransactionType.EXPENSE) {
+            const txDate = new Date(tx.date);
+            const amount = tx.price; // For expenses, price is the amount
+
+            if (txDate.getFullYear() === currentYear) {
+                year += amount;
+                if (txDate.getMonth() === currentMonth) {
+                    month += amount;
+                    if (txDate.getDate() === currentDate) {
+                        day += amount;
+                    }
+                }
+            }
+        }
+    });
+
+    return { day, month, year };
 };
 
 
@@ -64,6 +89,9 @@ export const processPortfolioFromTransactions = (
 
   // Process Transactions
   transactions.forEach(tx => {
+    // IGNORE EXPENSES in Portfolio Calculation
+    if (tx.type === TransactionType.EXPENSE) return;
+
     if (!portfolioMap.has(tx.symbol)) {
       portfolioMap.set(tx.symbol, {
         symbol: tx.symbol,
