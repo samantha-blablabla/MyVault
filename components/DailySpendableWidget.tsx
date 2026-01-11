@@ -24,7 +24,7 @@ export const DailySpendableWidget: React.FC = () => {
 
   // Custom Title Component with conditional styling
   const TitleComponent = (
-      <div className={`flex items-center gap-2 ${isOverBudget ? 'text-rose-400' : 'text-indigo-300'}`}>
+      <div className={`flex items-center gap-2 ${isOverBudget ? 'text-rose-400' : 'text-zinc-400'}`}>
           {isOverBudget ? <AlertTriangle size={18} /> : <Coffee size={18} />}
           <span>Hạn mức / ngày</span>
       </div>
@@ -37,7 +37,7 @@ export const DailySpendableWidget: React.FC = () => {
     <GlassCard 
         title={TitleComponent}
         action={ManageButton}
-        className={`h-full border-indigo-500/10 ${isOverBudget ? 'bg-gradient-to-br from-rose-950/50 to-zinc-900/60' : 'bg-gradient-to-br from-indigo-950/50 to-zinc-900/60'}`} 
+        className={`h-full border-white/5 ${isOverBudget ? 'bg-gradient-to-br from-rose-950/20 to-zinc-900/60' : 'bg-gradient-to-br from-zinc-800/40 to-zinc-900/60'}`} 
     >
       <div className="flex flex-col h-full gap-4">
         
@@ -99,8 +99,8 @@ export const DailySpendableWidget: React.FC = () => {
                     <div key={bill.id} className="flex items-center justify-between group cursor-pointer" onClick={() => updateBillStatus(bill.id, !bill.isPaid)}>
                         <div className="flex items-center gap-2">
                             {bill.isPaid ? 
-                                <CheckCircle2 size={14} className="text-emerald-500" /> : 
-                                <AlertCircle size={14} className="text-rose-500" />
+                                <CheckCircle2 size={14} className="text-zinc-600" /> : 
+                                <AlertCircle size={14} className="text-zinc-500" />
                             }
                             <span className={`text-xs font-medium ${bill.isPaid ? 'text-zinc-600 line-through' : 'text-zinc-300'}`}>{bill.name}</span>
                         </div>

@@ -160,14 +160,14 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
                             formatter={(value: number) => isPrivacyMode ? '••••••' : formatCurrency(value)}
                           />
                           <Legend iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
-                          <Bar name="Thiết yếu" dataKey="needs" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} />
-                          <Bar name="Đầu tư" dataKey="invest" stackId="a" fill="#10b981" />
-                          <Bar name="Dư/Tiết kiệm" dataKey="savings" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                          <Bar name="Thiết yếu" dataKey="needs" stackId="a" fill="#52525b" radius={[0, 0, 4, 4]} />
+                          <Bar name="Đầu tư" dataKey="invest" stackId="a" fill="#e4e4e7" />
+                          <Bar name="Dư/Tiết kiệm" dataKey="savings" stackId="a" fill="#a1a1aa" radius={[4, 4, 0, 0]} />
                       </BarChart>
                   </ResponsiveContainer>
               </div>
               <p className="text-[10px] text-zinc-600 text-center mt-2 italic">
-                  Dữ liệu 6 tháng gần nhất. Giúp bạn nhận ra xu hướng chi tiêu để điều chỉnh kế hoạch.
+                  Dữ liệu 6 tháng gần nhất.
               </p>
           </div>
       )}

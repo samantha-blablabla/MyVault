@@ -8,7 +8,7 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
     name: 'Thiết yếu (50%)',
     allocated: TOTAL_INCOME * 0.5, // 6.500.000
     spent: 3200000, 
-    color: '#3b82f6', // Blue
+    color: '#52525b', // Zinc-600 (Dark Gray)
     percentage: 50
   },
   {
@@ -16,7 +16,7 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
     name: 'Đầu tư (30%)',
     allocated: TOTAL_INCOME * 0.3, // 3.900.000
     spent: 3900000, 
-    color: '#10b981', // Emerald
+    color: '#e4e4e7', // Zinc-200 (White - Highlight)
     percentage: 30
   },
   {
@@ -24,7 +24,7 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
     name: 'Dự phòng (20%)',
     allocated: TOTAL_INCOME * 0.2, // 2.600.000
     spent: 2600000, 
-    color: '#f59e0b', // Amber
+    color: '#a1a1aa', // Zinc-400 (Light Gray)
     percentage: 20
   }
 ];

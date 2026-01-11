@@ -40,15 +40,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   const totalAssets = stockValue + fundValue + cashValue;
 
   // Data for Chart (Use real data if available, otherwise dummy for preview)
+  // MONOTONE COLORS: White (Stock), Zinc-400 (Funds), Zinc-600 (Cash)
   const hasData = totalAssets > 0;
   const allocationData = hasData ? [
-    { name: 'Cổ phiếu', value: stockValue, color: '#10b981' }, // Emerald-500
-    { name: 'CC Quỹ', value: fundValue, color: '#38bdf8' },   // Sky-400
-    { name: 'Tiền mặt', value: cashValue, color: '#f59e0b' }, // Amber-500
+    { name: 'Cổ phiếu', value: stockValue, color: '#e4e4e7' }, // Zinc-200 (Brightest)
+    { name: 'CC Quỹ', value: fundValue, color: '#a1a1aa' },   // Zinc-400 (Mid)
+    { name: 'Tiền mặt', value: cashValue, color: '#52525b' }, // Zinc-600 (Dark)
   ] : [
-    { name: 'Cổ phiếu', value: 45, color: '#10b981' },
-    { name: 'CC Quỹ', value: 30, color: '#38bdf8' },
-    { name: 'Tiền mặt', value: 25, color: '#f59e0b' },
+    { name: 'Cổ phiếu', value: 45, color: '#e4e4e7' },
+    { name: 'CC Quỹ', value: 30, color: '#a1a1aa' },
+    { name: 'Tiền mặt', value: 25, color: '#52525b' },
   ];
 
   return (
@@ -70,7 +71,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       <header className="flex justify-between items-center mb-8">
         <div>
            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-             <ShieldCheck className="text-emerald-500" /> FinVault
+             <ShieldCheck className="text-zinc-100" /> FinVault
            </h1>
            <p className="text-zinc-500 text-sm mt-1">Hệ thống quản trị tài sản cá nhân</p>
         </div>
@@ -79,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
              onClick={() => setIsExpenseModalOpen(true)}
              className="hidden md:flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 px-3 py-2 rounded-full transition-colors text-xs font-bold uppercase tracking-wider shadow-lg"
            >
-              <Zap size={16} className="text-amber-400" fill="currentColor" />
+              <Zap size={16} className="text-zinc-200" fill="currentColor" />
               Thu / Chi Nhanh
            </button>
 
@@ -128,12 +129,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       {/* Header Area */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <TrendingUp size={24} className="text-emerald-500" />
+              <TrendingUp size={24} className="text-zinc-400" />
               Danh mục Đầu tư & Tích sản
           </h2>
           <button 
               onClick={() => setIsTransModalOpen(true)}
-              className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-full transition-colors flex items-center gap-2 font-bold uppercase tracking-wide w-fit"
+              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 px-4 py-2 rounded-full transition-colors flex items-center gap-2 font-bold uppercase tracking-wide w-fit"
           >
               <Plus size={16} />
               Thêm Giao dịch Mới
@@ -147,14 +148,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
              {/* Column 1 & 2: Funds List */}
              <div className="col-span-1 md:col-span-2 h-full">
                 <GlassCard 
-                    title={<div className="flex items-center gap-2"><PieIcon size={16} className="text-sky-400"/><span>Chứng chỉ quỹ (Funds)</span></div>} 
+                    title={<div className="flex items-center gap-2"><PieIcon size={16} className="text-zinc-400"/><span>Chứng chỉ quỹ (Funds)</span></div>} 
                     className="h-full min-h-[14rem]"
                 >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {fundAssets.map((fund) => (
                             <div key={fund.symbol} className="flex items-center justify-between p-4 rounded-xl bg-black/20 hover:bg-black/40 transition-colors border border-white/5">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-400 font-bold text-sm border border-sky-500/20">
+                                    <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-sm border border-zinc-700">
                                         {fund.symbol[0]}
                                     </div>
                                     <div>
@@ -271,9 +272,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 {/* Add Button as a Card */}
                 <button 
                     onClick={() => setIsTransModalOpen(true)}
-                    className="min-w-[80px] md:min-w-[100px] flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
+                    className="min-w-[80px] md:min-w-[100px] flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-zinc-500/50 hover:bg-zinc-500/5 transition-all group"
                 >
-                    <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-emerald-500">
+                    <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-zinc-300">
                         <Plus size={24} />
                     </div>
                 </button>
@@ -286,7 +287,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       <div className="fixed bottom-6 right-6 md:hidden z-40">
           <button 
             onClick={() => setIsExpenseModalOpen(true)}
-            className="w-14 h-14 rounded-full bg-zinc-800 text-amber-400 border border-zinc-700 shadow-2xl shadow-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+            className="w-14 h-14 rounded-full bg-zinc-800 text-white border border-zinc-700 shadow-2xl shadow-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
           >
               <Zap size={24} fill="currentColor" />
           </button>
