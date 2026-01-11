@@ -18,15 +18,18 @@ interface FinanceContextType {
   daysRemaining: number;
   spendingStats: SpendingStats;
   targets: Record<string, number>;
-  isPrivacyMode: boolean; // New State
+  isPrivacyMode: boolean;
   
   // Actions
   addTransaction: (tx: Transaction) => void;
   addExpense: (amount: number, note: string) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
+  updateBillAmount: (id: string, amount: number) => void; // NEW
+  addBill: (name: string, amount: number, dueDay: number) => void; // NEW
+  removeBill: (id: string) => void; // NEW
   updateTarget: (symbol: string, quantity: number) => void;
-  refreshPrices: () => void; // Simulate n8n sync
-  togglePrivacyMode: () => void; // New Action
+  refreshPrices: () => void;
+  togglePrivacyMode: () => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -49,24 +52,22 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0 });
   const [targets, setTargets] = useState<Record<string, number>>(DEFAULT_TARGETS);
   
-  // Default to TRUE to hide money by default
   const [isPrivacyMode, setIsPrivacyMode] = useState(true);
 
-  // 1. Recalculate Portfolio whenever transactions OR targets change
+  // 1. Recalculate Portfolio
   useEffect(() => {
     const calculatedPortfolio = processPortfolioFromTransactions(
         transactions, 
         MARKET_PRICES, 
         PRICE_HISTORY, 
-        targets // Pass dynamic targets
+        targets
     );
     
-    // Add missing stocks that have 0 quantity but are in targets (like CTR)
     Object.keys(targets).forEach(targetSym => {
         if (!calculatedPortfolio.find(s => s.symbol === targetSym)) {
              calculatedPortfolio.push({
                 symbol: targetSym, 
-                name: targetSym === 'CTR' ? 'Viettel Constr' : targetSym, // Simple fallback naming
+                name: targetSym === 'CTR' ? 'Viettel Constr' : targetSym,
                 quantity: 0, 
                 targetQuantity: targets[targetSym], 
                 avgPrice: 0, 
@@ -78,8 +79,6 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
 
     setPortfolio(calculatedPortfolio);
-
-    // Calculate Spending Stats
     const stats = calculateSpendingStats(transactions);
     setSpendingStats(stats);
 
@@ -124,6 +123,27 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, isPaid } : bill));
   };
 
+  // --- NEW ACTIONS FOR BILLS ---
+  const updateBillAmount = (id: string, amount: number) => {
+      setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, amount } : bill));
+  };
+
+  const addBill = (name: string, amount: number, dueDay: number) => {
+      const newBill: FixedBill = {
+          id: `bill-${Date.now()}`,
+          name,
+          amount,
+          dueDay,
+          isPaid: false
+      };
+      setFixedBills(prev => [...prev, newBill]);
+  };
+
+  const removeBill = (id: string) => {
+      setFixedBills(prev => prev.filter(bill => bill.id !== id));
+  };
+  // -----------------------------
+
   const updateTarget = (symbol: string, quantity: number) => {
       setTargets(prev => ({
           ...prev,
@@ -153,6 +173,9 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       addTransaction,
       addExpense,
       updateBillStatus,
+      updateBillAmount,
+      addBill,
+      removeBill,
       updateTarget,
       refreshPrices,
       togglePrivacyMode
