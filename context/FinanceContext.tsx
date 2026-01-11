@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType } from '../types';
-import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS } from '../constants';
+import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS, TOTAL_INCOME } from '../constants';
 import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats } from '../services/financeLogic';
 
 interface SpendingStats {
@@ -19,15 +19,17 @@ interface FinanceContextType {
   spendingStats: SpendingStats;
   targets: Record<string, number>;
   isPrivacyMode: boolean;
+  monthlyIncome: number;
   
   // Actions
   addTransaction: (tx: Transaction) => void;
-  addExpense: (amount: number, note: string) => void;
+  addDailyTransaction: (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => void; // Renamed & Updated
   updateBillStatus: (id: string, isPaid: boolean) => void;
-  updateBillAmount: (id: string, amount: number) => void; // NEW
-  addBill: (name: string, amount: number, dueDay: number) => void; // NEW
-  removeBill: (id: string) => void; // NEW
+  updateBillAmount: (id: string, amount: number) => void;
+  addBill: (name: string, amount: number, dueDay: number) => void;
+  removeBill: (id: string) => void;
   updateTarget: (symbol: string, quantity: number) => void;
+  updateIncome: (amount: number) => void;
   refreshPrices: () => void;
   togglePrivacyMode: () => void;
 }
@@ -52,9 +54,22 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0 });
   const [targets, setTargets] = useState<Record<string, number>>(DEFAULT_TARGETS);
   
+  // New State for Income
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(TOTAL_INCOME);
   const [isPrivacyMode, setIsPrivacyMode] = useState(true);
 
-  // 1. Recalculate Portfolio
+  // 1. Recalculate Budget Allocations whenever Monthly Income changes
+  useEffect(() => {
+    setBudget(prevBudget => {
+        return prevBudget.map(cat => ({
+            ...cat,
+            // Recalculate allocated amount based on percentage (50/30/20)
+            allocated: monthlyIncome * (cat.percentage / 100)
+        }));
+    });
+  }, [monthlyIncome]);
+
+  // 2. Recalculate Portfolio
   useEffect(() => {
     const calculatedPortfolio = processPortfolioFromTransactions(
         transactions, 
@@ -84,7 +99,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   }, [transactions, targets]);
 
-  // 2. Recalculate Daily Spendable
+  // 3. Recalculate Daily Spendable
   useEffect(() => {
     const needsBudget = budget.find(b => b.id === 'needs');
     if (needsBudget) {
@@ -99,31 +114,35 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setTransactions(prev => [...prev, tx]);
   };
 
-  const addExpense = (amount: number, note: string) => {
+  // Replaces addExpense - Handles both Income and Expense for daily tracking
+  const addDailyTransaction = (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => {
     setBudget(prev => prev.map(cat => 
         cat.id === 'needs' 
-            ? { ...cat, spent: cat.spent + amount } 
+            ? { 
+                ...cat, 
+                // If Expense: Increase Spent. If Income: Decrease Spent (effectively increasing budget)
+                spent: type === TransactionType.EXPENSE ? cat.spent + amount : cat.spent - amount 
+              } 
             : cat
     ));
 
-    const expenseTx: Transaction = {
-        id: `exp-${Date.now()}`,
+    const newTx: Transaction = {
+        id: `tx-${Date.now()}`,
         date: new Date().toISOString(),
-        symbol: 'EXP', 
-        type: TransactionType.EXPENSE,
+        symbol: type === TransactionType.INCOME ? 'IN' : 'EXP', 
+        type: type,
         quantity: 1,
         price: amount,
         notes: note
     };
     
-    setTransactions(prev => [...prev, expenseTx]);
+    setTransactions(prev => [...prev, newTx]);
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
     setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, isPaid } : bill));
   };
 
-  // --- NEW ACTIONS FOR BILLS ---
   const updateBillAmount = (id: string, amount: number) => {
       setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, amount } : bill));
   };
@@ -142,13 +161,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const removeBill = (id: string) => {
       setFixedBills(prev => prev.filter(bill => bill.id !== id));
   };
-  // -----------------------------
 
   const updateTarget = (symbol: string, quantity: number) => {
       setTargets(prev => ({
           ...prev,
           [symbol]: quantity
       }));
+  };
+
+  const updateIncome = (amount: number) => {
+      setMonthlyIncome(amount);
   };
 
   const refreshPrices = () => {
@@ -170,13 +192,15 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       spendingStats,
       targets,
       isPrivacyMode,
+      monthlyIncome,
       addTransaction,
-      addExpense,
+      addDailyTransaction, // Updated
       updateBillStatus,
       updateBillAmount,
       addBill,
       removeBill,
       updateTarget,
+      updateIncome,
       refreshPrices,
       togglePrivacyMode
     }}>

@@ -8,7 +8,8 @@ export enum TransactionType {
   BUY = 'BUY',
   SELL = 'SELL',
   DIVIDEND = 'DIVIDEND',
-  EXPENSE = 'EXPENSE'
+  EXPENSE = 'EXPENSE',
+  INCOME = 'INCOME' // New type for windfall income
 }
 
 export interface Transaction {

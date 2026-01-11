@@ -1,22 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { BudgetCategory } from '../types';
 import { formatCurrency } from '../services/dataService';
 import { GlassCard } from './ui/GlassCard';
 import { useFinance } from '../context/FinanceContext';
+import { Pencil } from 'lucide-react';
+import { IncomeModal } from './IncomeModal';
 
 interface BudgetOverviewProps {
   budgets: BudgetCategory[];
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
-  const { isPrivacyMode } = useFinance();
+  const { isPrivacyMode, monthlyIncome } = useFinance();
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  
   const totalAllocated = budgets.reduce((acc, curr) => acc + curr.allocated, 0);
   const totalSpent = budgets.reduce((acc, curr) => acc + curr.spent, 0);
   const remaining = totalAllocated - totalSpent;
 
+  const EditButton = (
+    <button 
+      onClick={() => setIsIncomeModalOpen(true)}
+      className="text-zinc-500 hover:text-white transition-colors"
+      title="Cập nhật thu nhập tháng"
+    >
+        <Pencil size={14} />
+    </button>
+  );
+
   return (
-    <GlassCard title="Kế hoạch 50 / 30 / 20" className="h-full">
+    <>
+    <IncomeModal isOpen={isIncomeModalOpen} onClose={() => setIsIncomeModalOpen(false)} />
+    
+    <GlassCard title="Kế hoạch 50 / 30 / 20" action={EditButton} className="h-full">
       <div className="flex flex-col md:flex-row items-center h-full gap-6">
         
         {/* Chart Section */}
@@ -55,7 +72,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
         {/* Legend / Detail Section */}
         <div className="flex-1 w-full space-y-4">
             {budgets.map((cat) => {
-                const percentSpent = (cat.spent / cat.allocated) * 100;
+                const percentSpent = cat.allocated > 0 ? (cat.spent / cat.allocated) * 100 : 0;
                 return (
                     <div key={cat.id} className="group">
                         <div className="flex justify-between text-sm mb-1">
@@ -75,7 +92,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
                             <div 
                                 className="h-full rounded-full transition-all duration-1000 ease-out"
                                 style={{ 
-                                    width: `${percentSpent}%`,
+                                    width: `${Math.min(percentSpent, 100)}%`,
                                     backgroundColor: cat.color 
                                 }}
                             />
@@ -93,5 +110,6 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
         </div>
       </div>
     </GlassCard>
+    </>
   );
 };

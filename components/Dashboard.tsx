@@ -18,7 +18,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
-  const { portfolio, addTransaction, addExpense, isPrivacyMode, togglePrivacyMode } = useFinance();
+  const { portfolio, addTransaction, addDailyTransaction, isPrivacyMode, togglePrivacyMode } = useFinance();
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
@@ -38,11 +38,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         onSubmit={addTransaction} 
       />
 
-      {/* Expense Modal (Quick Add) */}
+      {/* Expense/Income Modal (Quick Add) */}
       <ExpenseModal
         isOpen={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
-        onSubmit={addExpense}
+        onSubmit={addDailyTransaction}
       />
 
       {/* Top Bar */}
@@ -54,6 +54,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
            <p className="text-zinc-500 text-sm mt-1">Hệ thống quản trị tài sản cá nhân</p>
         </div>
         <div className="flex items-center gap-3">
+           {/* Quick Add Button (Desktop) */}
+           <button 
+             onClick={() => setIsExpenseModalOpen(true)}
+             className="hidden md:flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 px-3 py-2 rounded-full transition-colors text-xs font-bold uppercase tracking-wider shadow-lg"
+           >
+              <Zap size={16} className="text-amber-400" fill="currentColor" />
+              Thu / Chi Nhanh
+           </button>
+
            {/* Privacy Toggle */}
            <button 
              onClick={togglePrivacyMode}
@@ -158,7 +167,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       <div className="fixed bottom-6 right-6 md:hidden z-40">
           <button 
             onClick={() => setIsExpenseModalOpen(true)}
-            className="w-14 h-14 rounded-full bg-white text-black shadow-2xl shadow-emerald-500/20 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+            className="w-14 h-14 rounded-full bg-zinc-800 text-amber-400 border border-zinc-700 shadow-2xl shadow-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
           >
               <Zap size={24} fill="currentColor" />
           </button>

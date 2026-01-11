@@ -6,7 +6,7 @@ import { TargetEditModal } from './TargetEditModal';
 import { formatCurrency } from '../services/dataService';
 
 export const InvestmentRoadmap: React.FC = () => {
-  const { portfolio, isPrivacyMode } = useFinance();
+  const { portfolio, isPrivacyMode, monthlyIncome } = useFinance();
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   // Find priority targets
@@ -25,10 +25,18 @@ export const InvestmentRoadmap: React.FC = () => {
   // Prevent division by zero
   const progress = targetQty > 0 ? Math.min(100, (currentQty / targetQty) * 100) : 0;
   
-  // Estimation: Assuming 900k/month investment for stocks
+  // Dynamic Calculation: 
+  // Invest Bucket (30%) - Fixed Funds (VNDAF 2M + DFIX 1M = 3M) = Remaining for Stocks
+  // If result is negative (income too low), assume 0 or minimum.
+  const investBudget = monthlyIncome * 0.3;
+  const stockBudget = Math.max(0, investBudget - 3000000); // 3M fixed for funds
+
   const price = activeTarget?.currentPrice || 0;
   const needed = (targetQty - currentQty) * price;
-  const monthsToGoal = (price > 0 && needed > 0) ? (needed / 900000).toFixed(1) : 0;
+  
+  // If stockBudget is very low, avoid Infinity
+  const effectiveStockBudget = stockBudget > 0 ? stockBudget : 500000; // Fallback estimation
+  const monthsToGoal = (price > 0 && needed > 0) ? (needed / effectiveStockBudget).toFixed(1) : 0;
 
   const EditButton = (
       <button 
@@ -88,7 +96,7 @@ export const InvestmentRoadmap: React.FC = () => {
                         <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
                     </div>
                     <div className="text-[10px] text-zinc-500 text-center">
-                        Dự kiến hoàn thành trong <span className="text-white font-bold">{isPrivacyMode ? '•••' : `${monthsToGoal} tháng`}</span> với ngân sách 900k/tháng.
+                        Dự kiến hoàn thành trong <span className="text-white font-bold">{isPrivacyMode ? '•••' : `${monthsToGoal} tháng`}</span> với ngân sách {formatCurrency(effectiveStockBudget)}/tháng.
                     </div>
                 </div>
             </div>
