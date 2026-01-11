@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 interface GlassCardProps {
   children: ReactNode;
   className?: string;
-  title?: string;
+  title?: ReactNode; // Changed from string to ReactNode
   action?: ReactNode;
 }
 
@@ -15,7 +15,10 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, className = '', 
       
       {(title || action) && (
         <div className="flex-none flex items-center justify-between border-b border-white/5 px-6 py-4">
-          {title && <h3 className="text-sm font-medium tracking-wide text-zinc-400 uppercase">{title}</h3>}
+          {/* Allow title to be a string or a custom component */}
+          <div className="text-sm font-medium tracking-wide text-zinc-400 uppercase flex items-center gap-2">
+             {title}
+          </div>
           {action && <div>{action}</div>}
         </div>
       )}

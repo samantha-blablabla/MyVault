@@ -6,7 +6,7 @@ import { Coffee, AlertCircle, CheckCircle2, CalendarDays, Calendar, Sun, Setting
 import { BillManagerModal } from './BillManagerModal';
 
 export const DailySpendableWidget: React.FC = () => {
-  const { dailySpendable, daysRemaining, fixedBills, updateBillStatus, spendingStats, isPrivacyMode } = useFinance();
+  const { dailySpendable, fixedBills, updateBillStatus, spendingStats, isPrivacyMode } = useFinance();
   const [isBillManagerOpen, setIsBillManagerOpen] = useState(false);
 
   // Check if over budget
@@ -22,20 +22,27 @@ export const DailySpendableWidget: React.FC = () => {
     </button>
   );
 
+  // Custom Title Component with conditional styling
+  const TitleComponent = (
+      <div className={`flex items-center gap-2 ${isOverBudget ? 'text-rose-400' : 'text-indigo-300'}`}>
+          {isOverBudget ? <AlertTriangle size={18} /> : <Coffee size={18} />}
+          <span>Hạn mức / ngày</span>
+      </div>
+  );
+
   return (
     <>
     <BillManagerModal isOpen={isBillManagerOpen} onClose={() => setIsBillManagerOpen(false)} />
     
-    <GlassCard className={`h-full border-indigo-500/10 ${isOverBudget ? 'bg-gradient-to-br from-rose-950/50 to-zinc-900/60' : 'bg-gradient-to-br from-indigo-950/50 to-zinc-900/60'}`} action={ManageButton}>
+    <GlassCard 
+        title={TitleComponent}
+        action={ManageButton}
+        className={`h-full border-indigo-500/10 ${isOverBudget ? 'bg-gradient-to-br from-rose-950/50 to-zinc-900/60' : 'bg-gradient-to-br from-indigo-950/50 to-zinc-900/60'}`} 
+    >
       <div className="flex flex-col h-full gap-4">
         
-        {/* Top: Daily Allowance */}
+        {/* Top: Daily Allowance Value */}
         <div>
-          <div className={`flex items-center gap-2 mb-2 ${isOverBudget ? 'text-rose-400' : 'text-indigo-300'}`}>
-            {isOverBudget ? <AlertTriangle size={18} /> : <Coffee size={18} />}
-            <span className="text-xs font-bold uppercase tracking-wider">Hạn mức / ngày</span>
-          </div>
-          
           <div>
             <span className={`text-3xl font-bold tracking-tight ${isOverBudget ? 'text-rose-500' : 'text-white'}`}>
               {isPrivacyMode ? '••••••' : formatCurrency(dailySpendable)}

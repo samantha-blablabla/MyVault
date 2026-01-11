@@ -70,7 +70,7 @@ export const TargetEditModal: React.FC<TargetEditModalProps> = ({ isOpen, onClos
                          min="0"
                          value={localTargets[symbol] || 0}
                          onChange={(e) => handleChange(symbol, e.target.value)}
-                         className="w-24 bg-transparent text-right font-mono font-bold text-white focus:outline-none border-b border-zinc-700 focus:border-emerald-500 py-1"
+                         className="w-24 bg-transparent text-right font-bold text-white focus:outline-none border-b border-zinc-700 focus:border-emerald-500 py-1"
                        />
                    </div>
                ))}
