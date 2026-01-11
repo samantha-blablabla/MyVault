@@ -256,14 +256,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
             {/* Scroll Container */}
             <div className="flex gap-4 overflow-x-auto pb-6 snap-x custom-scrollbar">
                 {stockAssets.map((stock) => (
-                    <div key={stock.symbol} className="min-w-[320px] md:min-w-[350px] snap-center h-[280px]">
+                    <div key={stock.symbol} className="min-w-[260px] md:min-w-[280px] snap-center h-[230px]">
                         <StockCard stock={stock} />
                     </div>
                 ))}
                 
                 {/* Empty State / Add New Card */}
                 {stockAssets.length === 0 && (
-                    <div className="min-w-[320px] h-[280px] flex items-center justify-center border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 text-zinc-500">
+                    <div className="min-w-[260px] h-[230px] flex items-center justify-center border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 text-zinc-500">
                         Chưa có cổ phiếu
                     </div>
                 )}
@@ -271,11 +271,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 {/* Add Button as a Card */}
                 <button 
                     onClick={() => setIsTransModalOpen(true)}
-                    className="min-w-[100px] flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
+                    className="min-w-[80px] md:min-w-[100px] flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
                 >
                     <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-emerald-500">
                         <Plus size={24} />
-                        <span className="text-xs font-bold">Mới</span>
                     </div>
                 </button>
             </div>

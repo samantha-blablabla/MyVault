@@ -25,6 +25,8 @@ interface FinanceContextType {
   // Actions
   addTransaction: (tx: Transaction) => void;
   addDailyTransaction: (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => void;
+  deleteTransaction: (id: string) => void;
+  editTransaction: (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
   updateBillAmount: (id: string, amount: number) => void;
   addBill: (name: string, amount: number, dueDay: number) => void;
@@ -117,6 +119,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Replaces addExpense - Handles both Income and Expense for daily tracking
   const addDailyTransaction = (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => {
+    // Update Budget Spent State
     setBudget(prev => prev.map(cat => 
         cat.id === 'needs' 
             ? { 
@@ -138,6 +141,74 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
     
     setTransactions(prev => [...prev, newTx]);
+  };
+
+  const deleteTransaction = (id: string) => {
+      const txToDelete = transactions.find(t => t.id === id);
+      if (!txToDelete) return;
+
+      // Reverse the effect on budget if it was a daily transaction
+      if (txToDelete.type === TransactionType.EXPENSE || txToDelete.type === TransactionType.INCOME) {
+          setBudget(prev => prev.map(cat => 
+            cat.id === 'needs' 
+                ? { 
+                    ...cat, 
+                    // Reverse: If it was Expense, subtract from spent. If Income, add to spent.
+                    spent: txToDelete.type === TransactionType.EXPENSE 
+                        ? cat.spent - txToDelete.price 
+                        : cat.spent + txToDelete.price 
+                  } 
+                : cat
+          ));
+      }
+
+      setTransactions(prev => prev.filter(t => t.id !== id));
+  };
+
+  const editTransaction = (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => {
+      const oldTx = transactions.find(t => t.id === id);
+      if (!oldTx) return;
+
+      // 1. Revert Old Transaction Effect on Budget
+      if (oldTx.type === TransactionType.EXPENSE || oldTx.type === TransactionType.INCOME) {
+          setBudget(prev => prev.map(cat => 
+             cat.id === 'needs'
+                 ? {
+                     ...cat,
+                     spent: oldTx.type === TransactionType.EXPENSE 
+                         ? cat.spent - oldTx.price 
+                         : cat.spent + oldTx.price
+                   }
+                 : cat
+          ));
+      }
+
+      // 2. Apply New Transaction Effect on Budget
+      if (updatedData.type === TransactionType.EXPENSE || updatedData.type === TransactionType.INCOME) {
+           setBudget(prev => prev.map(cat => 
+             cat.id === 'needs'
+                 ? {
+                     ...cat,
+                     spent: updatedData.type === TransactionType.EXPENSE
+                         ? cat.spent + updatedData.amount
+                         : cat.spent - updatedData.amount
+                   }
+                 : cat
+           ));
+      }
+
+      // 3. Update Transaction List
+      setTransactions(prev => prev.map(t => 
+          t.id === id 
+          ? { 
+              ...t, 
+              price: updatedData.amount, 
+              notes: updatedData.note, 
+              type: updatedData.type,
+              symbol: updatedData.type === TransactionType.INCOME ? 'IN' : 'EXP'
+            } 
+          : t
+      ));
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
@@ -197,6 +268,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       transactions, // Exposed
       addTransaction,
       addDailyTransaction, 
+      deleteTransaction,
+      editTransaction,
       updateBillStatus,
       updateBillAmount,
       addBill,
