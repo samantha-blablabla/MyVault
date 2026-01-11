@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { UserState, AssetType } from '../types';
 import { formatCurrency } from '../services/dataService';
 import { INITIAL_BUDGET } from '../constants';
@@ -24,9 +24,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   const { portfolio, budget, addTransaction, addDailyTransaction, isPrivacyMode, togglePrivacyMode } = useFinance();
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  
+  // Horizontal Scroll Logic for Stocks
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   const stockAssets = portfolio.filter(s => s.type === AssetType.Stock);
   const fundAssets = portfolio.filter(s => s.type === AssetType.Fund);
+  
+  // Total Slides = Stocks (or 1 if empty) + Add Button
+  const totalSlides = Math.max(stockAssets.length, 1) + 1;
+
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        // Estimate stride: min-w-[260px] + gap-4 (16px) = 276px. 
+        // Using firstChild clientWidth is safer if rendered.
+        const firstChild = container.firstElementChild;
+        const stride = firstChild ? firstChild.clientWidth + 16 : 276;
+        
+        const newIndex = Math.round(container.scrollLeft / stride);
+        if (newIndex !== activeSlide && newIndex < totalSlides) {
+            setActiveSlide(newIndex);
+        }
+    }
+  };
+
+  const scrollToSlide = (index: number) => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const firstChild = container.firstElementChild;
+        const stride = firstChild ? firstChild.clientWidth + 16 : 276;
+        
+        container.scrollTo({
+            left: index * stride,
+            behavior: 'smooth'
+        });
+        setActiveSlide(index); 
+      }
+  };
 
   // --- ALLOCATION CALCULATION ---
   const stockValue = stockAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
@@ -246,16 +282,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
              </div>
         </div>
 
-        {/* 2. STOCKS ROW (Horizontal Scroll) */}
+        {/* 2. STOCKS ROW (Horizontal Scroll with Dots) */}
         <div>
             <div className="flex items-center gap-2 mb-3 px-1">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Cổ phiếu niêm yết</span>
                 <div className="h-[1px] flex-1 bg-zinc-800"></div>
-                <span className="text-[10px] text-zinc-600">Scroll ngang để xem thêm &rarr;</span>
             </div>
             
             {/* Scroll Container */}
-            <div className="flex gap-4 overflow-x-auto pb-6 snap-x custom-scrollbar">
+            <div 
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-hide"
+            >
                 {stockAssets.map((stock) => (
                     <div key={stock.symbol} className="min-w-[260px] md:min-w-[280px] snap-center h-[230px]">
                         <StockCard stock={stock} />
@@ -264,7 +303,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 
                 {/* Empty State / Add New Card */}
                 {stockAssets.length === 0 && (
-                    <div className="min-w-[260px] h-[230px] flex items-center justify-center border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 text-zinc-500">
+                    <div className="min-w-[260px] h-[230px] snap-center flex items-center justify-center border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 text-zinc-500">
                         Chưa có cổ phiếu
                     </div>
                 )}
@@ -272,12 +311,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 {/* Add Button as a Card */}
                 <button 
                     onClick={() => setIsTransModalOpen(true)}
-                    className="min-w-[80px] md:min-w-[100px] flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-zinc-500/50 hover:bg-zinc-500/5 transition-all group"
+                    className="min-w-[80px] md:min-w-[100px] snap-center flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-zinc-500/50 hover:bg-zinc-500/5 transition-all group"
                 >
                     <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-zinc-300">
                         <Plus size={24} />
                     </div>
                 </button>
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="flex items-center justify-center gap-2 mt-2">
+                {Array.from({ length: totalSlides }).map((_, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => scrollToSlide(idx)}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${activeSlide === idx ? 'w-8 bg-white' : 'w-1.5 bg-zinc-800 hover:bg-zinc-700'}`}
+                        aria-label={`Go to item ${idx + 1}`}
+                    />
+                ))}
             </div>
         </div>
 
