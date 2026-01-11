@@ -42,7 +42,7 @@ export const DailySpendableWidget: React.FC = () => {
       <div className="flex flex-col h-full gap-4">
         
         {/* Top: Daily Allowance Value */}
-        <div>
+        <div className="flex-none">
           <div>
             <span className={`text-3xl font-bold tracking-tight ${isOverBudget ? 'text-rose-500' : 'text-white'}`}>
               {isPrivacyMode ? '••••••' : formatCurrency(dailySpendable)}
@@ -59,7 +59,7 @@ export const DailySpendableWidget: React.FC = () => {
         </div>
 
         {/* Middle: Spending Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 bg-white/5 rounded-lg p-3 border border-white/5">
+        <div className="flex-none grid grid-cols-3 gap-2 bg-white/5 rounded-lg p-3 border border-white/5">
             <div className="text-center space-y-1">
                 <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 uppercase font-bold">
                     <Sun size={10} /> Hôm nay
@@ -86,13 +86,14 @@ export const DailySpendableWidget: React.FC = () => {
             </div>
         </div>
 
-        {/* Bottom: Mini Bill Tracker */}
-        <div className="flex-1 flex flex-col justify-end">
-            <div className="pt-3 border-t border-white/5 space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
-                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider flex justify-between items-center">
-                    <span>Hóa đơn cố định</span>
-                    <span className="text-[9px] bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{fixedBills.length}</span>
-                </div>
+        {/* Bottom: Mini Bill Tracker - Now Flexible to fill remaining height */}
+        <div className="flex-1 min-h-0 flex flex-col border-t border-white/5 pt-3">
+            <div className="flex-none text-[10px] text-zinc-500 uppercase font-bold tracking-wider flex justify-between items-center mb-2">
+                <span>Hóa đơn cố định</span>
+                <span className="text-[9px] bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{fixedBills.length}</span>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2">
                 {fixedBills.length === 0 && <div className="text-xs text-zinc-600 italic">Chưa có hóa đơn</div>}
                 {fixedBills.map(bill => (
                     <div key={bill.id} className="flex items-center justify-between group cursor-pointer" onClick={() => updateBillStatus(bill.id, !bill.isPaid)}>

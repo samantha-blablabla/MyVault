@@ -9,7 +9,8 @@ import { DailySpendableWidget } from './DailySpendableWidget';
 import { InvestmentRoadmap } from './InvestmentRoadmap';
 import { TransactionModal } from './TransactionModal';
 import { ExpenseModal } from './ExpenseModal'; 
-import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff } from 'lucide-react';
+import { NetWorthCard } from './NetWorthCard';
+import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff, LayoutDashboard } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 interface DashboardProps {
@@ -22,9 +23,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
-  const totalNetWorth = portfolio.reduce((acc, stock) => acc + (stock.quantity * stock.currentPrice), 0) + 
-                        INITIAL_BUDGET.find(b => b.id === 'savings')?.allocated!; 
-
+  // Note: Total Net Worth is now calculated inside NetWorthCard for better granularity,
+  // but we keep a simple sum here if needed for other props, though NetWorthCard is self-contained.
   const stockAssets = portfolio.filter(s => s.type === AssetType.Stock);
   const fundAssets = portfolio.filter(s => s.type === AssetType.Fund);
 
@@ -71,13 +71,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
            >
               {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
            </button>
-
-           <div className="text-right hidden sm:block">
-              <div className="text-xs text-zinc-500 uppercase tracking-wider">Tổng tài sản</div>
-              <div className="text-xl text-emerald-400 font-bold">
-                  {isPrivacyMode ? '••••••' : formatCurrency(totalNetWorth)}
-              </div>
-           </div>
            
            <div className="h-8 w-[1px] bg-zinc-800 mx-1 hidden sm:block"></div>
 
@@ -87,50 +80,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         </div>
       </header>
 
-      {/* Bento Grid */}
+      {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-min">
         
-        {/* Row 1: Budget takes 2 cols */}
-        <div className="col-span-1 md:col-span-2 row-span-2 min-h-[18rem]">
-          <BudgetOverview budgets={INITIAL_BUDGET} />
+        {/* Row 1: Net Worth Card (2 cols) + Daily (1 col) + Roadmap (1 col) 
+            Increased height from h-52 to min-h-[22rem] (approx 352px) to prevent cutting off content 
+        */}
+        <div className="col-span-1 md:col-span-2 row-span-1 min-h-[22rem]">
+            <NetWorthCard />
         </div>
 
-        {/* Daily Spendable Widget */}
-        <div className="col-span-1 row-span-2 h-full">
+        <div className="col-span-1 row-span-1 min-h-[22rem]">
             <DailySpendableWidget />
         </div>
 
-        {/* Investment Roadmap */}
-        <div className="col-span-1 row-span-2 h-full">
+        <div className="col-span-1 row-span-1 min-h-[22rem]">
             <InvestmentRoadmap />
         </div>
         
-        {/* Row 2: Header for Stocks */}
-        <div className="col-span-1 md:col-span-4 mt-4">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-white flex items-center gap-2">
-                    <TrendingUp size={20} className="text-emerald-500" />
-                    Danh mục Đầu tư (Real-time)
-                </h2>
-                <button 
-                  onClick={() => setIsTransModalOpen(true)}
-                  className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
-                >
-                    <Plus size={14} />
-                    Thêm Giao dịch
-                </button>
-            </div>
+        {/* Row 2: Budget Overview (2 cols) + Funds List (2 cols) 
+            Increased min-height from 16rem to 22rem for consistency and space
+        */}
+        <div className="col-span-1 md:col-span-2 min-h-[22rem]">
+          <BudgetOverview budgets={INITIAL_BUDGET} />
         </div>
 
-        {/* Stock Cards Grid - Generated from Context */}
-        {stockAssets.map((stock) => (
-           <div key={stock.symbol} className="col-span-1 md:col-span-2 lg:col-span-1 h-64">
-              <StockCard stock={stock} />
-           </div>
-        ))}
-
-        {/* Funds List */}
-        <div className="col-span-1 md:col-span-2 h-full min-h-[16rem]">
+        <div className="col-span-1 md:col-span-2 min-h-[22rem]">
             <GlassCard title="Chứng chỉ quỹ" className="h-full">
                 <div className="space-y-4">
                     {fundAssets.map((fund) => (
@@ -160,6 +135,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 </div>
             </GlassCard>
         </div>
+
+        {/* Row 3: Header for Stocks */}
+        <div className="col-span-1 md:col-span-4 mt-2">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-white flex items-center gap-2">
+                    <TrendingUp size={20} className="text-emerald-500" />
+                    Danh mục Cổ phiếu (Real-time)
+                </h2>
+                <button 
+                  onClick={() => setIsTransModalOpen(true)}
+                  className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
+                >
+                    <Plus size={14} />
+                    Thêm Giao dịch
+                </button>
+            </div>
+        </div>
+
+        {/* Stock Cards Grid - Generated from Context */}
+        {stockAssets.map((stock) => (
+           <div key={stock.symbol} className="col-span-1 md:col-span-2 lg:col-span-1 min-h-[16rem]">
+              <StockCard stock={stock} />
+           </div>
+        ))}
 
       </div>
 
