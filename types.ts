@@ -28,6 +28,7 @@ export interface FixedBill {
   amount: number;
   dueDay: number; // Day of month (e.g., 5, 10, 15)
   isPaid: boolean;
+  category?: 'housing' | 'utilities' | 'internet' | 'subscription' | 'insurance' | 'debt' | 'other';
 }
 
 export interface StockData {

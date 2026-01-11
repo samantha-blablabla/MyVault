@@ -41,10 +41,10 @@ export const InvestmentRoadmap: React.FC = () => {
   const EditButton = (
       <button 
         onClick={() => setIsEditOpen(true)}
-        className="text-zinc-500 hover:text-white transition-colors"
+        className="p-2 -mr-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
         title="Chỉnh sửa mục tiêu"
       >
-          <Pencil size={14} />
+          <Pencil size={16} />
       </button>
   );
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Target } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import { AssetType } from '../types';
 
 interface TargetEditModalProps {
   isOpen: boolean;
@@ -8,8 +9,16 @@ interface TargetEditModalProps {
 }
 
 export const TargetEditModal: React.FC<TargetEditModalProps> = ({ isOpen, onClose }) => {
-  const { targets, updateTarget } = useFinance();
+  const { targets, updateTarget, portfolio } = useFinance();
   const [localTargets, setLocalTargets] = useState<Record<string, number>>({});
+
+  // Generate dynamic list of symbols to edit
+  // Combine: Default Keys + Portfolio Keys
+  const availableSymbols = Array.from(new Set([
+      ...Object.keys(targets),
+      ...portfolio.filter(p => p.type === AssetType.Stock).map(p => p.symbol),
+      'MBB', 'TCB', 'HPG', 'CTR' // Ensure these always exist as defaults
+  ])).sort();
 
   // Sync state when opening
   useEffect(() => {
@@ -56,8 +65,8 @@ export const TargetEditModal: React.FC<TargetEditModalProps> = ({ isOpen, onClos
                Điều chỉnh số lượng cổ phiếu mục tiêu bạn muốn nắm giữ. Hệ thống sẽ tự động tính lại tiến độ.
            </p>
 
-           <div className="space-y-3">
-               {['MBB', 'TCB', 'HPG', 'CTR'].map(symbol => (
+           <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+               {availableSymbols.map(symbol => (
                    <div key={symbol} className="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
                        <div className="flex items-center gap-3">
                            <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">

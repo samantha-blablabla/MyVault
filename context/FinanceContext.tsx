@@ -29,7 +29,7 @@ interface FinanceContextType {
   editTransaction: (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
   updateBillAmount: (id: string, amount: number) => void;
-  addBill: (name: string, amount: number, dueDay: number) => void;
+  addBill: (name: string, amount: number, dueDay: number, category?: FixedBill['category']) => void;
   removeBill: (id: string) => void;
   updateTarget: (symbol: string, quantity: number) => void;
   updateIncome: (amount: number) => void;
@@ -167,13 +167,14 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, amount } : bill));
   };
 
-  const addBill = (name: string, amount: number, dueDay: number) => {
+  const addBill = (name: string, amount: number, dueDay: number, category: FixedBill['category'] = 'other') => {
       const newBill: FixedBill = {
           id: `bill-${Date.now()}`,
           name,
           amount,
           dueDay,
-          isPaid: false
+          isPaid: false,
+          category
       };
       setFixedBills(prev => [...prev, newBill]);
   };

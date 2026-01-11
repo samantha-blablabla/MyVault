@@ -31,9 +31,9 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
 
 // Database of Fixed Monthly Bills
 export const FIXED_BILLS: FixedBill[] = [
-  { id: '1', name: 'Tiền nhà', amount: 2500000, dueDay: 5, isPaid: true },
-  { id: '2', name: 'Điện & Nước', amount: 600000, dueDay: 10, isPaid: true },
-  { id: '3', name: 'Internet/4G', amount: 250000, dueDay: 15, isPaid: false },
+  { id: '1', name: 'Tiền nhà', amount: 2500000, dueDay: 5, isPaid: true, category: 'housing' },
+  { id: '2', name: 'Điện & Nước', amount: 600000, dueDay: 10, isPaid: true, category: 'utilities' },
+  { id: '3', name: 'Internet/4G', amount: 250000, dueDay: 15, isPaid: false, category: 'internet' },
 ];
 
 /**
