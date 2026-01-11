@@ -20,10 +20,11 @@ interface FinanceContextType {
   targets: Record<string, number>;
   isPrivacyMode: boolean;
   monthlyIncome: number;
+  transactions: Transaction[]; // EXPOSED NOW
   
   // Actions
   addTransaction: (tx: Transaction) => void;
-  addDailyTransaction: (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => void; // Renamed & Updated
+  addDailyTransaction: (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
   updateBillAmount: (id: string, amount: number) => void;
   addBill: (name: string, amount: number, dueDay: number) => void;
@@ -193,8 +194,9 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       targets,
       isPrivacyMode,
       monthlyIncome,
+      transactions, // Exposed
       addTransaction,
-      addDailyTransaction, // Updated
+      addDailyTransaction, 
       updateBillStatus,
       updateBillAmount,
       addBill,

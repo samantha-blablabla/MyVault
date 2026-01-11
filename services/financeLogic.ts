@@ -88,8 +88,8 @@ export const processPortfolioFromTransactions = (
 
   // Process Transactions
   transactions.forEach(tx => {
-    // IGNORE EXPENSES in Portfolio Calculation
-    if (tx.type === TransactionType.EXPENSE) return;
+    // IGNORE EXPENSES and INCOME in Portfolio Calculation
+    if (tx.type === TransactionType.EXPENSE || tx.type === TransactionType.INCOME) return;
 
     if (!portfolioMap.has(tx.symbol)) {
       portfolioMap.set(tx.symbol, {

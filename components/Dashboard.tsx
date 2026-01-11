@@ -10,8 +10,10 @@ import { InvestmentRoadmap } from './InvestmentRoadmap';
 import { TransactionModal } from './TransactionModal';
 import { ExpenseModal } from './ExpenseModal'; 
 import { NetWorthCard } from './NetWorthCard';
-import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff, LayoutDashboard } from 'lucide-react';
+import { RecentTransactions } from './RecentTransactions';
+import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff, Wallet, PieChart as PieIcon } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardProps {
   user: UserState;
@@ -19,26 +21,45 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
-  const { portfolio, addTransaction, addDailyTransaction, isPrivacyMode, togglePrivacyMode } = useFinance();
+  const { portfolio, budget, addTransaction, addDailyTransaction, isPrivacyMode, togglePrivacyMode } = useFinance();
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
-  // Note: Total Net Worth is now calculated inside NetWorthCard for better granularity,
-  // but we keep a simple sum here if needed for other props, though NetWorthCard is self-contained.
   const stockAssets = portfolio.filter(s => s.type === AssetType.Stock);
   const fundAssets = portfolio.filter(s => s.type === AssetType.Fund);
 
+  // --- ALLOCATION CALCULATION ---
+  const stockValue = stockAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
+  const fundValue = fundAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
+  
+  // Calculate Cash (Available Budget + Savings)
+  const needs = budget.find(b => b.id === 'needs');
+  const savings = budget.find(b => b.id === 'savings');
+  const cashValue = (Math.max(0, (needs?.allocated || 0) - (needs?.spent || 0))) + (savings?.allocated || 0);
+
+  const totalAssets = stockValue + fundValue + cashValue;
+
+  // Data for Chart (Use real data if available, otherwise dummy for preview)
+  const hasData = totalAssets > 0;
+  const allocationData = hasData ? [
+    { name: 'Cổ phiếu', value: stockValue, color: '#10b981' }, // Emerald-500
+    { name: 'CC Quỹ', value: fundValue, color: '#38bdf8' },   // Sky-400
+    { name: 'Tiền mặt', value: cashValue, color: '#f59e0b' }, // Amber-500
+  ] : [
+    { name: 'Cổ phiếu', value: 45, color: '#10b981' },
+    { name: 'CC Quỹ', value: 30, color: '#38bdf8' },
+    { name: 'Tiền mặt', value: 25, color: '#f59e0b' },
+  ];
+
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 animate-fade-in pb-24 md:pb-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 animate-fade-in pb-24 md:pb-8 overflow-x-hidden">
       
-      {/* Transaction Modal (Stocks) */}
       <TransactionModal 
         isOpen={isTransModalOpen} 
         onClose={() => setIsTransModalOpen(false)} 
         onSubmit={addTransaction} 
       />
 
-      {/* Expense/Income Modal (Quick Add) */}
       <ExpenseModal
         isOpen={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
@@ -54,7 +75,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
            <p className="text-zinc-500 text-sm mt-1">Hệ thống quản trị tài sản cá nhân</p>
         </div>
         <div className="flex items-center gap-3">
-           {/* Quick Add Button (Desktop) */}
            <button 
              onClick={() => setIsExpenseModalOpen(true)}
              className="hidden md:flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 px-3 py-2 rounded-full transition-colors text-xs font-bold uppercase tracking-wider shadow-lg"
@@ -63,7 +83,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
               Thu / Chi Nhanh
            </button>
 
-           {/* Privacy Toggle */}
            <button 
              onClick={togglePrivacyMode}
              className="p-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
@@ -80,85 +99,187 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         </div>
       </header>
 
-      {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-min">
+      {/* === SECTION 1 & 2: Overview & Cashflow (Bento Grid) === */}
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-min mb-8">
         
-        {/* Row 1: Net Worth Card (2 cols) + Daily (1 col) + Roadmap (1 col) 
-            Increased height from h-52 to min-h-[22rem] (approx 352px) to prevent cutting off content 
-        */}
+        {/* Row 1 */}
         <div className="col-span-1 md:col-span-2 row-span-1 min-h-[22rem]">
             <NetWorthCard />
         </div>
-
         <div className="col-span-1 row-span-1 min-h-[22rem]">
             <DailySpendableWidget />
         </div>
-
         <div className="col-span-1 row-span-1 min-h-[22rem]">
             <InvestmentRoadmap />
         </div>
         
-        {/* Row 2: Budget Overview (2 cols) + Funds List (2 cols) 
-            Increased min-height from 16rem to 22rem for consistency and space
-        */}
+        {/* Row 2 */}
         <div className="col-span-1 md:col-span-2 min-h-[22rem]">
           <BudgetOverview budgets={INITIAL_BUDGET} />
         </div>
-
         <div className="col-span-1 md:col-span-2 min-h-[22rem]">
-            <GlassCard title="Chứng chỉ quỹ" className="h-full">
-                <div className="space-y-4">
-                    {fundAssets.map((fund) => (
-                        <div key={fund.symbol} className="flex items-center justify-between p-3 rounded-lg bg-black/20 hover:bg-black/40 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded bg-sky-500/10 flex items-center justify-center text-sky-400 font-bold text-xs">
-                                    {fund.symbol[0]}
+            <RecentTransactions />
+        </div>
+      </div>
+
+
+      {/* === SECTION 3: INVESTMENT PORTFOLIO === */}
+      
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <TrendingUp size={24} className="text-emerald-500" />
+              Danh mục Đầu tư & Tích sản
+          </h2>
+          <button 
+              onClick={() => setIsTransModalOpen(true)}
+              className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-full transition-colors flex items-center gap-2 font-bold uppercase tracking-wide w-fit"
+          >
+              <Plus size={16} />
+              Thêm Giao dịch Mới
+          </button>
+      </div>
+
+      <div className="space-y-6">
+        
+        {/* 1. FUNDS ROW & ALLOCATION CHART */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             {/* Column 1 & 2: Funds List */}
+             <div className="col-span-1 md:col-span-2 h-full">
+                <GlassCard 
+                    title={<div className="flex items-center gap-2"><PieIcon size={16} className="text-sky-400"/><span>Chứng chỉ quỹ (Funds)</span></div>} 
+                    className="h-full min-h-[14rem]"
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {fundAssets.map((fund) => (
+                            <div key={fund.symbol} className="flex items-center justify-between p-4 rounded-xl bg-black/20 hover:bg-black/40 transition-colors border border-white/5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center text-sky-400 font-bold text-sm border border-sky-500/20">
+                                        {fund.symbol[0]}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-white">{fund.symbol}</div>
+                                        <div className="text-xs text-zinc-500">{fund.name}</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-sm font-medium text-white">{fund.symbol}</div>
-                                    <div className="text-xs text-zinc-500">{fund.name}</div>
+                                <div className="text-right">
+                                    <div className="text-sm font-bold text-white">
+                                        {isPrivacyMode ? '••••••' : formatCurrency(fund.currentPrice * fund.quantity)}
+                                    </div>
+                                    <div className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded inline-block mt-1">
+                                    Lãi: {isPrivacyMode ? '•••' : formatCurrency((fund.currentPrice - fund.avgPrice) * fund.quantity)}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <div className="text-sm font-bold text-white">
-                                    {isPrivacyMode ? '••••••' : formatCurrency(fund.currentPrice * fund.quantity)}
-                                </div>
-                                <div className="text-xs text-emerald-500">
-                                   Lãi: {isPrivacyMode ? '•••' : formatCurrency((fund.currentPrice - fund.avgPrice) * fund.quantity)}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    <div className="mt-4 p-3 border border-dashed border-zinc-700 rounded-lg text-center text-xs text-zinc-500 hover:text-zinc-300 cursor-pointer hover:border-zinc-500 transition-all">
-                        Hệ thống tự động đồng bộ giá từ n8n
+                        ))}
+                        {fundAssets.length === 0 && <div className="text-zinc-500 text-sm italic p-2">Chưa có quỹ nào.</div>}
                     </div>
-                </div>
-            </GlassCard>
+                    <div className="mt-4 text-[10px] text-zinc-600 uppercase tracking-wider text-center border-t border-white/5 pt-2">
+                        Dữ liệu NAV cập nhật tự động
+                    </div>
+                </GlassCard>
+             </div>
+             
+             {/* Column 3: Allocation Chart (Real Data) */}
+             <div className="col-span-1 h-full min-h-[14rem]">
+                <GlassCard title="Cơ cấu tài sản" className="h-full">
+                    <div className="flex flex-col h-full">
+                        <div className="flex-1 min-h-[150px] relative">
+                             <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={allocationData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={40}
+                                        outerRadius={60}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        stroke="none"
+                                        startAngle={90}
+                                        endAngle={-270}
+                                    >
+                                        {allocationData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} strokeWidth={0} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip 
+                                        formatter={(value: number) => hasData && !isPrivacyMode ? formatCurrency(value) : (isPrivacyMode ? '••••••' : `${value}%`)}
+                                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', color: '#fff', fontSize: '12px', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#fff' }}
+                                    />
+                                </PieChart>
+                             </ResponsiveContainer>
+                             {/* Center Text */}
+                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-80">
+                                 <Wallet size={16} className="text-zinc-500 mb-1" />
+                             </div>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex flex-col gap-2 mt-2 px-2 pb-2">
+                             {allocationData.map((item, idx) => {
+                                 // Calculate percent
+                                 const percent = hasData 
+                                     ? ((item.value / totalAssets) * 100).toFixed(1) 
+                                     : item.value; // dummy value is already percent
+                                 
+                                 return (
+                                     <div key={idx} className="flex items-center justify-between text-xs">
+                                         <div className="flex items-center gap-2">
+                                             <div className="w-2 h-2 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: item.color, boxShadow: `0 0 5px ${item.color}` }}></div>
+                                             <span className="text-zinc-400">{item.name}</span>
+                                         </div>
+                                         <span className="font-bold text-white">{percent}%</span>
+                                     </div>
+                                 )
+                             })}
+                             {!hasData && (
+                                 <div className="text-[10px] text-zinc-600 text-center mt-1 italic">
+                                     (Biểu đồ minh họa)
+                                 </div>
+                             )}
+                        </div>
+                    </div>
+                </GlassCard>
+             </div>
         </div>
 
-        {/* Row 3: Header for Stocks */}
-        <div className="col-span-1 md:col-span-4 mt-2">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-white flex items-center gap-2">
-                    <TrendingUp size={20} className="text-emerald-500" />
-                    Danh mục Cổ phiếu (Real-time)
-                </h2>
+        {/* 2. STOCKS ROW (Horizontal Scroll) */}
+        <div>
+            <div className="flex items-center gap-2 mb-3 px-1">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Cổ phiếu niêm yết</span>
+                <div className="h-[1px] flex-1 bg-zinc-800"></div>
+                <span className="text-[10px] text-zinc-600">Scroll ngang để xem thêm &rarr;</span>
+            </div>
+            
+            {/* Scroll Container */}
+            <div className="flex gap-4 overflow-x-auto pb-6 snap-x custom-scrollbar">
+                {stockAssets.map((stock) => (
+                    <div key={stock.symbol} className="min-w-[320px] md:min-w-[350px] snap-center h-[280px]">
+                        <StockCard stock={stock} />
+                    </div>
+                ))}
+                
+                {/* Empty State / Add New Card */}
+                {stockAssets.length === 0 && (
+                    <div className="min-w-[320px] h-[280px] flex items-center justify-center border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 text-zinc-500">
+                        Chưa có cổ phiếu
+                    </div>
+                )}
+                
+                {/* Add Button as a Card */}
                 <button 
-                  onClick={() => setIsTransModalOpen(true)}
-                  className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
+                    onClick={() => setIsTransModalOpen(true)}
+                    className="min-w-[100px] flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
                 >
-                    <Plus size={14} />
-                    Thêm Giao dịch
+                    <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-emerald-500">
+                        <Plus size={24} />
+                        <span className="text-xs font-bold">Mới</span>
+                    </div>
                 </button>
             </div>
         </div>
-
-        {/* Stock Cards Grid - Generated from Context */}
-        {stockAssets.map((stock) => (
-           <div key={stock.symbol} className="col-span-1 md:col-span-2 lg:col-span-1 min-h-[16rem]">
-              <StockCard stock={stock} />
-           </div>
-        ))}
 
       </div>
 
