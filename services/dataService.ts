@@ -2,29 +2,56 @@ import { StockData } from "../types";
 import { INITIAL_PORTFOLIO } from "../constants";
 
 /**
- * n8n INTEGRATION GUIDE:
+ * CLOUDFLARE D1 INTEGRATION GUIDE:
  * 
- * In a real scenario, this service would fetch data from your backend Next.js API route.
- * 
- * 1. n8n Workflow:
- *    - Trigger: Schedule (Every night at 20:00).
- *    - Action: Google Sheets Node (Read rows for TCB, MBB, etc.).
- *    - Action: HTTP Request (GET/Scrape) for VNDAF/DFIX NAV.
- *    - Action: HTTP Request (POST) to https://your-domain.com/api/webhooks/update-prices
- *      Headers: { "x-api-key": process.env.N8N_SECRET_KEY }
- *      Body: { "TCB": 34500, "VNDAF": 19200, ... }
- * 
- * 2. This frontend would then fetch from GET /api/portfolio
+ * Base API URL for your Cloudflare Worker/Pages Function.
+ * In development, this might point to localhost:8787
+ * In production, this points to your domain.
  */
+// const API_BASE_URL = '/api'; 
 
+/**
+ * FETCH PORTFOLIO (READ)
+ * Connects to D1: SELECT * FROM assets WHERE user_id = ?
+ */
 export const getPortfolioData = async (): Promise<StockData[]> => {
-  // Simulate API latency
+  // TODO: Uncomment when Cloudflare Backend is ready
+  /*
+  try {
+      const response = await fetch(`${API_BASE_URL}/portfolio`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
+  } catch (error) {
+      console.error("Failed to fetch from D1, falling back to local data", error);
+      return INITIAL_PORTFOLIO;
+  }
+  */
+
+  // Fallback / Current State: Simulate API latency
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(INITIAL_PORTFOLIO);
     }, 800);
   });
 };
+
+/**
+ * SYNC TRANSACTION (WRITE)
+ * Connects to D1: INSERT INTO transactions (...) VALUES (...)
+ */
+export const syncTransactionToD1 = async (transaction: any) => {
+    // TODO: Implement Sync Logic
+    console.log("Syncing to Cloudflare D1:", transaction);
+    /*
+    await fetch(`${API_BASE_URL}/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction)
+    });
+    */
+};
+
+// --- UTILS ---
 
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('vi-VN', {
