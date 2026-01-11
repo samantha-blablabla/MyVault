@@ -1,4 +1,4 @@
-import { FixedBill, Transaction, TransactionType, StockData, AssetType } from "../types";
+import { FixedBill, Transaction, TransactionType, StockData, AssetType, BudgetCategory } from "../types";
 
 // --- 1. Needs & Budget Logic ---
 
@@ -27,6 +27,42 @@ export const calculateDailySpendable = (
   const dailyAmount = remainingBudget > 0 ? remainingBudget / daysRemaining : 0;
 
   return { dailyAmount, daysRemaining, remainingBudget };
+};
+
+/**
+ * Recalculates the 'spent' amount for budget categories based on transaction history.
+ * Ensures data consistency when transactions are edited or deleted.
+ */
+export const calculateBudgetProgress = (
+    currentBudget: BudgetCategory[],
+    transactions: Transaction[]
+): BudgetCategory[] => {
+    // 1. Calculate total spent for 'needs' (Expenses - Income Windfalls)
+    // Note: In this system, 'needs' acts as the main bucket for daily cashflow.
+    let totalNeedsSpent = 0;
+
+    transactions.forEach(tx => {
+        // Only count Daily Transactions (those with special symbols or specific logic)
+        // Usually daily expenses have type EXPENSE/INCOME. 
+        // Investment transactions (BUY/SELL) are handled in Portfolio logic, not Budget logic.
+        
+        if (tx.type === TransactionType.EXPENSE) {
+            totalNeedsSpent += tx.price;
+        } 
+        else if (tx.type === TransactionType.INCOME) {
+            // If it's a daily income (like a gift/bonus), it reduces the 'spent' amount,
+            // effectively increasing the available budget.
+            totalNeedsSpent -= tx.price;
+        }
+    });
+
+    // 2. Return new budget array with updated 'spent' values
+    return currentBudget.map(cat => {
+        if (cat.id === 'needs') {
+            return { ...cat, spent: totalNeedsSpent };
+        }
+        return cat;
+    });
 };
 
 /**

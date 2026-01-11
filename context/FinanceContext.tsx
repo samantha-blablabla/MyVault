@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType } from '../types';
 import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS, TOTAL_INCOME } from '../constants';
-import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats } from '../services/financeLogic';
+import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats, calculateBudgetProgress } from '../services/financeLogic';
 
 interface SpendingStats {
     day: number;
@@ -72,7 +72,13 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
   }, [monthlyIncome]);
 
-  // 2. Recalculate Portfolio
+  // 2. Recalculate Budget Spending whenever Transactions change
+  // This ensures 'spent' is always in sync with the history, even after edits/deletes
+  useEffect(() => {
+      setBudget(prevBudget => calculateBudgetProgress(prevBudget, transactions));
+  }, [transactions]);
+
+  // 3. Recalculate Portfolio & Stats
   useEffect(() => {
     const calculatedPortfolio = processPortfolioFromTransactions(
         transactions, 
@@ -102,7 +108,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   }, [transactions, targets]);
 
-  // 3. Recalculate Daily Spendable
+  // 4. Recalculate Daily Spendable
   useEffect(() => {
     const needsBudget = budget.find(b => b.id === 'needs');
     if (needsBudget) {
@@ -117,19 +123,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setTransactions(prev => [...prev, tx]);
   };
 
-  // Replaces addExpense - Handles both Income and Expense for daily tracking
   const addDailyTransaction = (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => {
-    // Update Budget Spent State
-    setBudget(prev => prev.map(cat => 
-        cat.id === 'needs' 
-            ? { 
-                ...cat, 
-                // If Expense: Increase Spent. If Income: Decrease Spent (effectively increasing budget)
-                spent: type === TransactionType.EXPENSE ? cat.spent + amount : cat.spent - amount 
-              } 
-            : cat
-    ));
-
     const newTx: Transaction = {
         id: `tx-${Date.now()}`,
         date: new Date().toISOString(),
@@ -141,63 +135,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
     
     setTransactions(prev => [...prev, newTx]);
+    // NOTE: We no longer manually update 'budget' state here. 
+    // The useEffect [transactions] will handle the recalculation automatically.
   };
 
   const deleteTransaction = (id: string) => {
-      const txToDelete = transactions.find(t => t.id === id);
-      if (!txToDelete) return;
-
-      // Reverse the effect on budget if it was a daily transaction
-      if (txToDelete.type === TransactionType.EXPENSE || txToDelete.type === TransactionType.INCOME) {
-          setBudget(prev => prev.map(cat => 
-            cat.id === 'needs' 
-                ? { 
-                    ...cat, 
-                    // Reverse: If it was Expense, subtract from spent. If Income, add to spent.
-                    spent: txToDelete.type === TransactionType.EXPENSE 
-                        ? cat.spent - txToDelete.price 
-                        : cat.spent + txToDelete.price 
-                  } 
-                : cat
-          ));
-      }
-
       setTransactions(prev => prev.filter(t => t.id !== id));
+      // Budget recalculation is handled by useEffect
   };
 
   const editTransaction = (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => {
-      const oldTx = transactions.find(t => t.id === id);
-      if (!oldTx) return;
-
-      // 1. Revert Old Transaction Effect on Budget
-      if (oldTx.type === TransactionType.EXPENSE || oldTx.type === TransactionType.INCOME) {
-          setBudget(prev => prev.map(cat => 
-             cat.id === 'needs'
-                 ? {
-                     ...cat,
-                     spent: oldTx.type === TransactionType.EXPENSE 
-                         ? cat.spent - oldTx.price 
-                         : cat.spent + oldTx.price
-                   }
-                 : cat
-          ));
-      }
-
-      // 2. Apply New Transaction Effect on Budget
-      if (updatedData.type === TransactionType.EXPENSE || updatedData.type === TransactionType.INCOME) {
-           setBudget(prev => prev.map(cat => 
-             cat.id === 'needs'
-                 ? {
-                     ...cat,
-                     spent: updatedData.type === TransactionType.EXPENSE
-                         ? cat.spent + updatedData.amount
-                         : cat.spent - updatedData.amount
-                   }
-                 : cat
-           ));
-      }
-
-      // 3. Update Transaction List
       setTransactions(prev => prev.map(t => 
           t.id === id 
           ? { 
@@ -209,6 +156,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
             } 
           : t
       ));
+      // Budget recalculation is handled by useEffect
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
