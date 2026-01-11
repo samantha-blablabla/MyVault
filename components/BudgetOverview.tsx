@@ -23,7 +23,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
     <button 
       onClick={() => setIsIncomeModalOpen(true)}
       className="text-zinc-500 hover:text-white transition-colors"
-      title="Cập nhật thu nhập tháng"
+      title="Điều chỉnh kế hoạch & Thu nhập"
     >
         <Pencil size={14} />
     </button>
@@ -33,7 +33,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
     <>
     <IncomeModal isOpen={isIncomeModalOpen} onClose={() => setIsIncomeModalOpen(false)} />
     
-    <GlassCard title="Kế hoạch 50 / 30 / 20" action={EditButton} className="h-full">
+    <GlassCard title="Kế hoạch Tài chính" action={EditButton} className="h-full">
       <div className="flex flex-col md:flex-row items-center h-full gap-6">
         
         {/* Chart Section */}
@@ -78,7 +78,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
                         <div className="flex justify-between text-sm mb-1">
                             <span className="text-zinc-300 flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }}></div>
-                                {cat.name}
+                                {cat.name} <span className="text-zinc-500 text-[10px] ml-1">({cat.percentage}%)</span>
                             </span>
                             <span className="font-bold text-zinc-400 text-xs">
                                 {isPrivacyMode 

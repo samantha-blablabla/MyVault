@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, Camera, Coffee, CreditCard, ShoppingBag, ArrowUpCircle, ArrowDownCircle, Gift, Banknote, Sparkles, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../services/dataService';
 import { TransactionType } from '../types';
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface ExpenseModalProps {
   isOpen: boolean;
@@ -70,21 +71,67 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
           // Create a local preview URL
           const previewUrl = URL.createObjectURL(file);
           setScannedImage(previewUrl);
-          simulateAIScan(file);
+          scanReceiptWithGemini(file);
       }
   };
 
-  const simulateAIScan = (file: File) => {
+  const scanReceiptWithGemini = async (file: File) => {
       setIsScanning(true);
       
-      // SIMULATION: In Cloudflare env, we would upload this file to R2 or send base64 to an AI Worker
-      setTimeout(() => {
+      try {
+        // Convert to Base64
+        const base64Data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const result = reader.result as string;
+                // remove data:image/xyz;base64,
+                resolve(result.split(',')[1]);
+            };
+            reader.onerror = reject;
+        });
+
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-latest',
+            contents: {
+                parts: [
+                    { inlineData: { mimeType: file.type, data: base64Data } },
+                    { text: "Analyze this receipt. Extract the total amount (numeric only) and the merchant name or a brief description. Identify if it is an EXPENSE or INCOME (receipts are usually EXPENSE)." }
+                ]
+            },
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        amount: { type: Type.NUMBER, description: "Total amount found on the receipt" },
+                        note: { type: Type.STRING, description: "Merchant name or description" },
+                        type: { type: Type.STRING, enum: ["EXPENSE", "INCOME"] }
+                    }
+                }
+            }
+        });
+
+        const text = response.text;
+        if (text) {
+            const data = JSON.parse(text);
+            if (data.amount) setAmount(data.amount.toString());
+            if (data.note) setNote(data.note);
+            if (data.type) setType(data.type === 'INCOME' ? TransactionType.INCOME : TransactionType.EXPENSE);
+        }
+      } catch (error) {
+          console.error("Gemini Scan Error:", error);
+          // Fallback simulation for demo purposes if API key is missing or fails
+          // setTimeout(() => {
+          //    setAmount('125000');
+          //    setNote('Hóa đơn Highlands Coffee (Fallback)');
+          //    setType(TransactionType.EXPENSE);
+          // }, 1000);
+      } finally {
           setIsScanning(false);
-          // Dummy extracted data
-          setAmount('125000');
-          setNote('Hóa đơn Highlands Coffee (Auto-Scan)');
-          setType(TransactionType.EXPENSE);
-      }, 2500);
+      }
   };
 
   const removeImage = () => {
@@ -130,7 +177,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
                     <div className="absolute inset-0 border-b-4 border-emerald-500 animate-[scan_1.5s_ease-in-out_infinite]"></div>
                 </div>
                 <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                    <Sparkles className="text-emerald-500" size={20} /> AI Đang Đọc Hóa Đơn...
+                    <Sparkles className="text-emerald-500" size={20} /> Gemini AI Processing...
                 </h3>
                 <p className="text-zinc-500 text-sm mt-1">Đang trích xuất số tiền & nội dung</p>
             </div>

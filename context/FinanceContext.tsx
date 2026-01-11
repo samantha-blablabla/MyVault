@@ -9,6 +9,12 @@ interface SpendingStats {
     year: number;
 }
 
+interface BudgetRules {
+    needs: number;
+    invest: number;
+    savings: number;
+}
+
 interface FinanceContextType {
   // State
   portfolio: StockData[];
@@ -32,7 +38,7 @@ interface FinanceContextType {
   addBill: (name: string, amount: number, dueDay: number, category?: FixedBill['category']) => void;
   removeBill: (id: string) => void;
   updateTarget: (symbol: string, quantity: number) => void;
-  updateIncome: (amount: number) => void;
+  updateBudgetPlan: (totalIncome: number, rules: BudgetRules) => void;
   refreshPrices: () => void;
   togglePrivacyMode: () => void;
 }
@@ -47,6 +53,13 @@ const DEFAULT_TARGETS: Record<string, number> = {
     'HPG': 1000 
 };
 
+// Initial 50/30/20
+const DEFAULT_BUDGET_RULES: BudgetRules = {
+    needs: 50,
+    invest: 30,
+    savings: 20
+};
+
 export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
   const [budget, setBudget] = useState<BudgetCategory[]>(INITIAL_BUDGET);
@@ -57,23 +70,27 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0 });
   const [targets, setTargets] = useState<Record<string, number>>(DEFAULT_TARGETS);
   
-  // New State for Income
+  // New State for Income & Rules
   const [monthlyIncome, setMonthlyIncome] = useState<number>(TOTAL_INCOME);
+  const [budgetRules, setBudgetRules] = useState<BudgetRules>(DEFAULT_BUDGET_RULES);
   const [isPrivacyMode, setIsPrivacyMode] = useState(true);
 
-  // 1. Recalculate Budget Allocations whenever Monthly Income changes
+  // 1. Recalculate Budget Allocations whenever Monthly Income OR Rules changes
   useEffect(() => {
     setBudget(prevBudget => {
-        return prevBudget.map(cat => ({
-            ...cat,
-            // Recalculate allocated amount based on percentage (50/30/20)
-            allocated: monthlyIncome * (cat.percentage / 100)
-        }));
+        return prevBudget.map(cat => {
+            const pct = budgetRules[cat.id as keyof BudgetRules] || 0;
+            return {
+                ...cat,
+                percentage: pct,
+                name: cat.name.split('(')[0].trim() + ` (${pct}%)`, // Update name display
+                allocated: monthlyIncome * (pct / 100)
+            };
+        });
     });
-  }, [monthlyIncome]);
+  }, [monthlyIncome, budgetRules]);
 
   // 2. Recalculate Budget Spending whenever Transactions change
-  // This ensures 'spent' is always in sync with the history, even after edits/deletes
   useEffect(() => {
       setBudget(prevBudget => calculateBudgetProgress(prevBudget, transactions));
   }, [transactions]);
@@ -135,13 +152,10 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
     
     setTransactions(prev => [...prev, newTx]);
-    // NOTE: We no longer manually update 'budget' state here. 
-    // The useEffect [transactions] will handle the recalculation automatically.
   };
 
   const deleteTransaction = (id: string) => {
       setTransactions(prev => prev.filter(t => t.id !== id));
-      // Budget recalculation is handled by useEffect
   };
 
   const editTransaction = (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => {
@@ -156,7 +170,6 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
             } 
           : t
       ));
-      // Budget recalculation is handled by useEffect
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
@@ -190,8 +203,9 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       }));
   };
 
-  const updateIncome = (amount: number) => {
-      setMonthlyIncome(amount);
+  const updateBudgetPlan = (totalIncome: number, rules: BudgetRules) => {
+      setMonthlyIncome(totalIncome);
+      setBudgetRules(rules);
   };
 
   const refreshPrices = () => {
@@ -224,7 +238,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       addBill,
       removeBill,
       updateTarget,
-      updateIncome,
+      updateBudgetPlan, // Updated Action
       refreshPrices,
       togglePrivacyMode
     }}>
