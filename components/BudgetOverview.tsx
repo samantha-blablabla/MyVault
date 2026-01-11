@@ -3,12 +3,14 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { BudgetCategory } from '../types';
 import { formatCurrency } from '../services/dataService';
 import { GlassCard } from './ui/GlassCard';
+import { useFinance } from '../context/FinanceContext';
 
 interface BudgetOverviewProps {
   budgets: BudgetCategory[];
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
+  const { isPrivacyMode } = useFinance();
   const totalAllocated = budgets.reduce((acc, curr) => acc + curr.allocated, 0);
   const totalSpent = budgets.reduce((acc, curr) => acc + curr.spent, 0);
   const remaining = totalAllocated - totalSpent;
@@ -36,15 +38,17 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
                 ))}
               </Pie>
               <Tooltip 
-                 formatter={(value: number) => formatCurrency(value)}
-                 contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', color: '#fff' }}
+                 formatter={(value: number) => isPrivacyMode ? '••••••' : formatCurrency(value)}
+                 contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', color: '#fff', fontFamily: 'Plus Jakarta Sans' }}
               />
             </PieChart>
           </ResponsiveContainer>
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-zinc-500 text-xs uppercase tracking-wider">Tổng thu nhập</span>
-            <span className="text-white font-mono font-bold">{formatCurrency(totalAllocated)}</span>
+            <span className="text-white font-bold">
+                {isPrivacyMode ? '••••••' : formatCurrency(totalAllocated)}
+            </span>
           </div>
         </div>
 
@@ -59,8 +63,11 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }}></div>
                                 {cat.name}
                             </span>
-                            <span className="font-mono text-zinc-400 text-xs">
-                                {formatCurrency(cat.spent)} / {formatCurrency(cat.allocated)}
+                            <span className="font-bold text-zinc-400 text-xs">
+                                {isPrivacyMode 
+                                    ? '••••••' 
+                                    : `${formatCurrency(cat.spent)} / ${formatCurrency(cat.allocated)}`
+                                }
                             </span>
                         </div>
                         {/* Progress Bar for specific category */}
@@ -79,7 +86,9 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budgets }) => {
             
             <div className="pt-4 border-t border-white/5 flex justify-between items-center">
                 <span className="text-xs text-zinc-500 uppercase">Còn lại trong tháng</span>
-                <span className="text-emerald-400 font-mono font-bold text-lg">{formatCurrency(remaining)}</span>
+                <span className="text-emerald-400 font-bold text-lg">
+                    {isPrivacyMode ? '••••••' : formatCurrency(remaining)}
+                </span>
             </div>
         </div>
       </div>

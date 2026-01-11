@@ -8,8 +8,8 @@ import { GlassCard } from './ui/GlassCard';
 import { DailySpendableWidget } from './DailySpendableWidget';
 import { InvestmentRoadmap } from './InvestmentRoadmap';
 import { TransactionModal } from './TransactionModal';
-import { ExpenseModal } from './ExpenseModal'; // Import new modal
-import { ShieldCheck, LogOut, TrendingUp, Plus, Zap } from 'lucide-react';
+import { ExpenseModal } from './ExpenseModal'; 
+import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 
 interface DashboardProps {
@@ -18,8 +18,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
-  // Use Global State from Context
-  const { portfolio, addTransaction, addExpense } = useFinance();
+  const { portfolio, addTransaction, addExpense, isPrivacyMode, togglePrivacyMode } = useFinance();
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
@@ -54,11 +53,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
            </h1>
            <p className="text-zinc-500 text-sm mt-1">Hệ thống quản trị tài sản cá nhân</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+           {/* Privacy Toggle */}
+           <button 
+             onClick={togglePrivacyMode}
+             className="p-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
+             title={isPrivacyMode ? "Hiện số dư" : "Ẩn số dư"}
+           >
+              {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+           </button>
+
            <div className="text-right hidden sm:block">
               <div className="text-xs text-zinc-500 uppercase tracking-wider">Tổng tài sản</div>
-              <div className="text-xl font-mono text-emerald-400 font-bold">{formatCurrency(totalNetWorth)}</div>
+              <div className="text-xl text-emerald-400 font-bold">
+                  {isPrivacyMode ? '••••••' : formatCurrency(totalNetWorth)}
+              </div>
            </div>
+           
+           <div className="h-8 w-[1px] bg-zinc-800 mx-1 hidden sm:block"></div>
+
            <button onClick={logout} className="p-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors">
               <LogOut size={20} />
            </button>
@@ -123,9 +136,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-sm font-mono text-white">{formatCurrency(fund.currentPrice * fund.quantity)}</div>
+                                <div className="text-sm font-bold text-white">
+                                    {isPrivacyMode ? '••••••' : formatCurrency(fund.currentPrice * fund.quantity)}
+                                </div>
                                 <div className="text-xs text-emerald-500">
-                                   Lãi: {formatCurrency((fund.currentPrice - fund.avgPrice) * fund.quantity)}
+                                   Lãi: {isPrivacyMode ? '•••' : formatCurrency((fund.currentPrice - fund.avgPrice) * fund.quantity)}
                                 </div>
                             </div>
                         </div>

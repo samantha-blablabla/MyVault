@@ -67,17 +67,16 @@ export const calculateSpendingStats = (transactions: Transaction[]) => {
 
 /**
  * Calculates MAC (Moving Average Cost) and Total Quantity from transaction history.
- * This is the "Time-by-time" engine.
+ * Now accepts 'targets' as a parameter to allow dynamic updates from UI.
  */
 export const processPortfolioFromTransactions = (
   transactions: Transaction[],
   marketPrices: Record<string, number>,
-  priceHistory: Record<string, number[]>
+  priceHistory: Record<string, number[]>,
+  targets: Record<string, number> // ADDED: Dynamic Targets
 ): StockData[] => {
   const portfolioMap = new Map<string, StockData>();
 
-  // Initialize targets (Hardcoded for now based on objective, can be DB driven later)
-  const targets: Record<string, number> = { 'TCB': 100, 'MBB': 100, 'CTR': 50, 'HPG': 1000 };
   const assetTypes: Record<string, AssetType> = {
       'TCB': AssetType.Stock, 'MBB': AssetType.Stock, 'HPG': AssetType.Stock, 'CTR': AssetType.Stock,
       'VNDAF': AssetType.Fund, 'DFIX': AssetType.Fund
@@ -101,7 +100,7 @@ export const processPortfolioFromTransactions = (
         currentPrice: marketPrices[tx.symbol] || 0,
         history: priceHistory[tx.symbol] || [],
         type: assetTypes[tx.symbol] || AssetType.Stock,
-        targetQuantity: targets[tx.symbol]
+        targetQuantity: targets[tx.symbol] || 0 // Use dynamic target
       });
     }
 
@@ -121,6 +120,8 @@ export const processPortfolioFromTransactions = (
       stock.marketValue = stock.quantity * stock.currentPrice;
       stock.pnl = (stock.currentPrice - stock.avgPrice) * stock.quantity;
       stock.pnlPercent = ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100;
+      // Ensure target is set even if not in map initially (for updates)
+      stock.targetQuantity = targets[stock.symbol] || 0;
       return stock;
   });
 };

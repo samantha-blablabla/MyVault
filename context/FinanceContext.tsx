@@ -17,15 +17,27 @@ interface FinanceContextType {
   dailySpendable: number;
   daysRemaining: number;
   spendingStats: SpendingStats;
+  targets: Record<string, number>;
+  isPrivacyMode: boolean; // New State
   
   // Actions
   addTransaction: (tx: Transaction) => void;
   addExpense: (amount: number, note: string) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
+  updateTarget: (symbol: string, quantity: number) => void;
   refreshPrices: () => void; // Simulate n8n sync
+  togglePrivacyMode: () => void; // New Action
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
+
+// Initial default targets
+const DEFAULT_TARGETS: Record<string, number> = { 
+    'TCB': 100, 
+    'MBB': 100, 
+    'CTR': 50, 
+    'HPG': 1000 
+};
 
 export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
@@ -35,24 +47,43 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [dailySpendable, setDailySpendable] = useState(0);
   const [daysRemaining, setDaysRemaining] = useState(0);
   const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0 });
+  const [targets, setTargets] = useState<Record<string, number>>(DEFAULT_TARGETS);
+  
+  // Default to TRUE to hide money by default
+  const [isPrivacyMode, setIsPrivacyMode] = useState(true);
 
-  // 1. Recalculate Portfolio whenever transactions change
+  // 1. Recalculate Portfolio whenever transactions OR targets change
   useEffect(() => {
-    const calculatedPortfolio = processPortfolioFromTransactions(transactions, MARKET_PRICES, PRICE_HISTORY);
+    const calculatedPortfolio = processPortfolioFromTransactions(
+        transactions, 
+        MARKET_PRICES, 
+        PRICE_HISTORY, 
+        targets // Pass dynamic targets
+    );
+    
     // Add missing stocks that have 0 quantity but are in targets (like CTR)
-    if (!calculatedPortfolio.find(s => s.symbol === 'CTR')) {
-        calculatedPortfolio.push({
-            symbol: 'CTR', name: 'Viettel Constr', quantity: 0, targetQuantity: 50, avgPrice: 0, 
-            currentPrice: MARKET_PRICES['CTR'], history: PRICE_HISTORY['CTR'], type: 'STOCK' as any
-        });
-    }
+    Object.keys(targets).forEach(targetSym => {
+        if (!calculatedPortfolio.find(s => s.symbol === targetSym)) {
+             calculatedPortfolio.push({
+                symbol: targetSym, 
+                name: targetSym === 'CTR' ? 'Viettel Constr' : targetSym, // Simple fallback naming
+                quantity: 0, 
+                targetQuantity: targets[targetSym], 
+                avgPrice: 0, 
+                currentPrice: MARKET_PRICES[targetSym] || 0, 
+                history: PRICE_HISTORY[targetSym] || [], 
+                type: 'STOCK' as any
+            });
+        }
+    });
+
     setPortfolio(calculatedPortfolio);
 
     // Calculate Spending Stats
     const stats = calculateSpendingStats(transactions);
     setSpendingStats(stats);
 
-  }, [transactions]);
+  }, [transactions, targets]);
 
   // 2. Recalculate Daily Spendable
   useEffect(() => {
@@ -70,18 +101,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const addExpense = (amount: number, note: string) => {
-    // 1. Update the 'spent' amount for 'needs' category in Budget View
     setBudget(prev => prev.map(cat => 
         cat.id === 'needs' 
             ? { ...cat, spent: cat.spent + amount } 
             : cat
     ));
 
-    // 2. Create a Transaction record for History & Stats
     const expenseTx: Transaction = {
         id: `exp-${Date.now()}`,
         date: new Date().toISOString(),
-        symbol: 'EXP', // Dummy symbol
+        symbol: 'EXP', 
         type: TransactionType.EXPENSE,
         quantity: 1,
         price: amount,
@@ -89,17 +118,26 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
     
     setTransactions(prev => [...prev, expenseTx]);
-    console.log(`Expense added: ${amount} for ${note}`);
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
     setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, isPaid } : bill));
   };
 
+  const updateTarget = (symbol: string, quantity: number) => {
+      setTargets(prev => ({
+          ...prev,
+          [symbol]: quantity
+      }));
+  };
+
   const refreshPrices = () => {
-    // In real app, call API here. For now, we trigger a re-calc
-    const calculatedPortfolio = processPortfolioFromTransactions(transactions, MARKET_PRICES, PRICE_HISTORY);
+    const calculatedPortfolio = processPortfolioFromTransactions(transactions, MARKET_PRICES, PRICE_HISTORY, targets);
     setPortfolio(calculatedPortfolio);
+  };
+
+  const togglePrivacyMode = () => {
+      setIsPrivacyMode(prev => !prev);
   };
 
   return (
@@ -110,10 +148,14 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       dailySpendable,
       daysRemaining,
       spendingStats,
+      targets,
+      isPrivacyMode,
       addTransaction,
       addExpense,
       updateBillStatus,
-      refreshPrices
+      updateTarget,
+      refreshPrices,
+      togglePrivacyMode
     }}>
       {children}
     </FinanceContext.Provider>

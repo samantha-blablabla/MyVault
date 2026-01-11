@@ -4,14 +4,17 @@ import { ResponsiveContainer, LineChart, Line } from 'recharts';
 import { TrendingUp, TrendingDown, Target } from 'lucide-react';
 import { formatCurrency } from '../services/dataService';
 import { GlassCard } from './ui/GlassCard';
+import { useFinance } from '../context/FinanceContext';
 
 interface StockCardProps {
   stock: StockData;
 }
 
 export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
+  const { isPrivacyMode } = useFinance();
+  
   const isProfit = stock.currentPrice >= stock.avgPrice;
-  const percentageChange = ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100;
+  const percentageChange = stock.avgPrice > 0 ? ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100 : 0;
   const chartData = stock.history.map((val, idx) => ({ i: idx, val }));
   
   // Progress towards target (e.g., 100 shares)
@@ -26,18 +29,18 @@ export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
             <div className="flex flex-col">
             <div className="flex items-center gap-2">
                 <span className="font-bold text-lg text-white tracking-tight">{stock.symbol}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded font-mono ${isProfit ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isProfit ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                 {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(2)}%
                 </span>
             </div>
             <span className="text-xs text-zinc-500">{stock.name}</span>
             </div>
             <div className="text-right">
-            <div className="font-mono text-lg font-medium text-white">
-                {formatCurrency(stock.currentPrice)}
+            <div className="font-bold text-lg text-white">
+                {isPrivacyMode ? '••••••' : formatCurrency(stock.currentPrice)}
             </div>
             <div className="text-xs text-zinc-500">
-                Vốn: {formatCurrency(stock.avgPrice)}
+                Vốn: {isPrivacyMode ? '••••••' : formatCurrency(stock.avgPrice)}
             </div>
             </div>
         </div>
@@ -61,9 +64,9 @@ export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
 
         {/* Footer Info */}
         <div className="flex justify-between items-center text-xs text-zinc-400 mb-2 shrink-0">
-            <span>Đang giữ: <span className="text-white font-mono">{stock.quantity}</span> cp</span>
-            <span className="font-mono text-zinc-500">
-                {formatCurrency(stock.quantity * stock.currentPrice)}
+            <span>Đang giữ: <span className="text-white font-bold">{stock.quantity}</span> cp</span>
+            <span className="font-bold text-zinc-500">
+                {isPrivacyMode ? '••••••' : formatCurrency(stock.quantity * stock.currentPrice)}
             </span>
         </div>
 

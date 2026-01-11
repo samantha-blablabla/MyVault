@@ -5,7 +5,7 @@ import { formatCurrency } from '../services/dataService';
 import { Coffee, AlertCircle, CheckCircle2, CalendarDays, Calendar, Sun } from 'lucide-react';
 
 export const DailySpendableWidget: React.FC = () => {
-  const { dailySpendable, daysRemaining, fixedBills, updateBillStatus, spendingStats } = useFinance();
+  const { dailySpendable, daysRemaining, fixedBills, updateBillStatus, spendingStats, isPrivacyMode } = useFinance();
 
   return (
     <GlassCard className="h-full bg-gradient-to-br from-indigo-950/50 to-zinc-900/60 border-indigo-500/10">
@@ -20,7 +20,7 @@ export const DailySpendableWidget: React.FC = () => {
           
           <div>
             <span className="text-3xl font-bold text-white tracking-tight">
-              {formatCurrency(dailySpendable)}
+              {isPrivacyMode ? '••••••' : formatCurrency(dailySpendable)}
             </span>
             <span className="text-xs text-zinc-400 ml-1 font-medium">khả dụng</span>
           </div>
@@ -32,19 +32,25 @@ export const DailySpendableWidget: React.FC = () => {
                 <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 uppercase font-bold">
                     <Sun size={10} /> Hôm nay
                 </div>
-                <div className="text-sm font-bold text-white">{formatCurrency(spendingStats.day).replace('₫', '')}</div>
+                <div className="text-sm font-bold text-white">
+                    {isPrivacyMode ? '•••' : formatCurrency(spendingStats.day).replace('₫', '')}
+                </div>
             </div>
             <div className="text-center space-y-1 border-l border-white/10">
                 <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 uppercase font-bold">
                     <CalendarDays size={10} /> Tháng
                 </div>
-                <div className="text-sm font-bold text-white">{formatCurrency(spendingStats.month).replace('₫', '')}</div>
+                <div className="text-sm font-bold text-white">
+                    {isPrivacyMode ? '•••' : formatCurrency(spendingStats.month).replace('₫', '')}
+                </div>
             </div>
             <div className="text-center space-y-1 border-l border-white/10">
                 <div className="flex items-center justify-center gap-1 text-[10px] text-zinc-400 uppercase font-bold">
                     <Calendar size={10} /> Năm
                 </div>
-                <div className="text-sm font-bold text-white">{formatCurrency(spendingStats.year).replace('₫', '')}</div>
+                <div className="text-sm font-bold text-white">
+                    {isPrivacyMode ? '•••' : formatCurrency(spendingStats.year).replace('₫', '')}
+                </div>
             </div>
         </div>
 
@@ -61,7 +67,9 @@ export const DailySpendableWidget: React.FC = () => {
                             }
                             <span className={`text-xs font-medium ${bill.isPaid ? 'text-zinc-600 line-through' : 'text-zinc-300'}`}>{bill.name}</span>
                         </div>
-                        <span className="text-xs font-mono text-zinc-500 group-hover:text-white transition-colors">{formatCurrency(bill.amount)}</span>
+                        <span className="text-xs font-bold text-zinc-500 group-hover:text-white transition-colors">
+                            {isPrivacyMode ? '•••' : formatCurrency(bill.amount)}
+                        </span>
                     </div>
                 ))}
             </div>
