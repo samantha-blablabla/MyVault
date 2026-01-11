@@ -38,21 +38,20 @@ export const calculateBudgetProgress = (
     transactions: Transaction[]
 ): BudgetCategory[] => {
     // 1. Calculate total spent for 'needs' (Expenses - Income Windfalls)
-    // Note: In this system, 'needs' acts as the main bucket for daily cashflow.
     let totalNeedsSpent = 0;
 
     transactions.forEach(tx => {
-        // Only count Daily Transactions (those with special symbols or specific logic)
-        // Usually daily expenses have type EXPENSE/INCOME. 
-        // Investment transactions (BUY/SELL) are handled in Portfolio logic, not Budget logic.
+        const txDate = new Date(tx.date);
+        const now = new Date();
         
-        if (tx.type === TransactionType.EXPENSE) {
-            totalNeedsSpent += tx.price;
-        } 
-        else if (tx.type === TransactionType.INCOME) {
-            // If it's a daily income (like a gift/bonus), it reduces the 'spent' amount,
-            // effectively increasing the available budget.
-            totalNeedsSpent -= tx.price;
+        // Only count transactions in current month for the Budget Display
+        if (txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear()) {
+             if (tx.type === TransactionType.EXPENSE) {
+                totalNeedsSpent += tx.price;
+            } 
+            else if (tx.type === TransactionType.INCOME) {
+                totalNeedsSpent -= tx.price;
+            }
         }
     });
 
@@ -81,7 +80,7 @@ export const calculateSpendingStats = (transactions: Transaction[]) => {
     transactions.forEach(tx => {
         if (tx.type === TransactionType.EXPENSE) {
             const txDate = new Date(tx.date);
-            const amount = tx.price; // For expenses, price is the amount
+            const amount = tx.price;
 
             if (txDate.getFullYear() === currentYear) {
                 year += amount;
@@ -96,6 +95,88 @@ export const calculateSpendingStats = (transactions: Transaction[]) => {
     });
 
     return { day, month, year };
+};
+
+/**
+ * NEW: Generates 6-month history for Charts & Insights
+ */
+export const getMonthlyHistory = (transactions: Transaction[], income: number) => {
+    const history: Record<string, { month: string, needs: number, invest: number, savings: number }> = {};
+    const today = new Date();
+
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+        // Short month name for chart
+        const monthName = `T${d.getMonth() + 1}`; 
+        history[key] = { month: monthName, needs: 0, invest: 0, savings: 0 };
+    }
+
+    transactions.forEach(tx => {
+        const d = new Date(tx.date);
+        const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+        
+        if (history[key]) {
+            if (tx.type === TransactionType.EXPENSE) {
+                history[key].needs += tx.price;
+            } else if (tx.type === TransactionType.INCOME) {
+                history[key].needs -= tx.price; // Income reduces net spend
+            } else if (tx.type === TransactionType.BUY) {
+                history[key].invest += (tx.price * tx.quantity);
+            }
+        }
+    });
+
+    // Calculate Savings (Residual) & format for Recharts
+    return Object.values(history).map(item => {
+        // Simple assumption: Savings = Income - Needs - Invest. 
+        // If negative, set to 0 (overspent).
+        const calculatedSavings = income - item.needs - item.invest;
+        return {
+            ...item,
+            savings: Math.max(0, calculatedSavings)
+        };
+    });
+};
+
+/**
+ * NEW: Generates Smart Advice based on last month's performance
+ */
+export const getFinancialAdvice = (historyData: any[], currentBudgetRules: any) => {
+    if (historyData.length < 2) return null; // Need at least last month
+
+    const lastMonth = historyData[historyData.length - 2]; // The completed month before current
+    // Calculate total actual outflow to determine percentages
+    const totalOut = lastMonth.needs + lastMonth.invest + lastMonth.savings;
+    if (totalOut === 0) return null;
+
+    const needsPct = (lastMonth.needs / totalOut) * 100;
+    const investPct = (lastMonth.invest / totalOut) * 100;
+
+    // Compare with rules (Plan)
+    const plannedNeeds = currentBudgetRules.needs || 50;
+    const plannedInvest = currentBudgetRules.invest || 30;
+
+    let status: 'good' | 'warning' | 'alert' = 'good';
+    let message = "Tháng trước bạn đã quản lý tài chính rất tốt! Hãy duy trì phong độ này.";
+    let action = "Tiếp tục tích sản vào các mã mục tiêu (MBB/CTR).";
+
+    if (needsPct > plannedNeeds + 10) {
+        status = 'alert';
+        message = `Tháng trước chi tiêu Thiết yếu chiếm tới ${needsPct.toFixed(0)}% (Mục tiêu ${plannedNeeds}%).`;
+        action = "Tháng này cần thắt chặt chi tiêu. Ưu tiên nấu ăn tại nhà và giảm mua sắm.";
+    } else if (investPct < plannedInvest - 5) {
+        status = 'warning';
+        message = `Tỷ lệ Đầu tư tháng trước chỉ đạt ${investPct.toFixed(0)}% (Mục tiêu ${plannedInvest}%).`;
+        action = "Hãy cố gắng dồn thêm tiền nhàn rỗi vào cổ phiếu ngay đầu tháng này.";
+    } else if (needsPct < plannedNeeds - 10) {
+        status = 'good';
+        message = `Tuyệt vời! Bạn đã tiết kiệm chi tiêu rất tốt (${needsPct.toFixed(0)}%).`;
+        action = "Bạn có dư tiền mặt. Cân nhắc thưởng cho bản thân hoặc mua thêm chứng chỉ quỹ.";
+    }
+
+    return { status, message, action, month: lastMonth.month };
 };
 
 
