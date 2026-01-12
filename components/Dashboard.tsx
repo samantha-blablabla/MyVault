@@ -11,7 +11,7 @@ import { TransactionModal } from './TransactionModal';
 import { ExpenseModal } from './ExpenseModal'; 
 import { NetWorthCard } from './NetWorthCard';
 import { RecentTransactions } from './RecentTransactions';
-import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff, Wallet, PieChart as PieIcon } from 'lucide-react';
+import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff, Wallet, PieChart as PieIcon, ServerOff, Moon, Sun, ArrowRight, LayoutGrid, List } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -21,7 +21,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
-  const { portfolio, budget, addTransaction, addDailyTransaction, isPrivacyMode, togglePrivacyMode } = useFinance();
+  const { portfolio, budget, addTransaction, addDailyTransaction, isPrivacyMode, togglePrivacyMode, transactions } = useFinance();
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   
@@ -38,8 +38,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   const handleScroll = () => {
     if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        // Estimate stride: min-w-[260px] + gap-4 (16px) = 276px. 
-        // Using firstChild clientWidth is safer if rendered.
         const firstChild = container.firstElementChild;
         const stride = firstChild ? firstChild.clientWidth + 16 : 276;
         
@@ -75,21 +73,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
   const totalAssets = stockValue + fundValue + cashValue;
 
-  // Data for Chart (Use real data if available, otherwise dummy for preview)
-  // MONOTONE COLORS: White (Stock), Zinc-400 (Funds), Zinc-600 (Cash)
+  // Data for Chart - Dark Mode Colors Only
   const hasData = totalAssets > 0;
   const allocationData = hasData ? [
-    { name: 'Cổ phiếu', value: stockValue, color: '#e4e4e7' }, // Zinc-200 (Brightest)
-    { name: 'CC Quỹ', value: fundValue, color: '#a1a1aa' },   // Zinc-400 (Mid)
-    { name: 'Tiền mặt', value: cashValue, color: '#52525b' }, // Zinc-600 (Dark)
+    { name: 'Cổ phiếu', value: stockValue, color: '#cafc01' }, // Primary Lime
+    { name: 'CC Quỹ', value: fundValue, color: '#ffffff' },    // White
+    { name: 'Tiền mặt', value: cashValue, color: '#52525b' },  // Zinc 600
   ] : [
-    { name: 'Cổ phiếu', value: 45, color: '#e4e4e7' },
-    { name: 'CC Quỹ', value: 30, color: '#a1a1aa' },
-    { name: 'Tiền mặt', value: 25, color: '#52525b' },
+    { name: 'Cổ phiếu', value: 1, color: '#cafc01' },
+    { name: 'CC Quỹ', value: 1, color: '#ffffff' },
+    { name: 'Tiền mặt', value: 1, color: '#52525b' },
   ];
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 animate-fade-in pb-24 md:pb-8 overflow-x-hidden">
+    <div className="min-h-screen p-4 md:p-8 animate-fade-in pb-24 md:pb-8 overflow-x-hidden selection:bg-primary selection:text-black">
       
       <TransactionModal 
         isOpen={isTransModalOpen} 
@@ -104,35 +101,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       />
 
       {/* Top Bar */}
-      <header className="flex justify-between items-center mb-8">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div>
-           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-             <ShieldCheck className="text-zinc-100" /> FinVault
+           {/* BIG BOLD TYPOGRAPHY */}
+           <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-black border-2 border-transparent shadow-lg">
+                <ShieldCheck size={24} />
+             </div>
+             FINVAULT
            </h1>
-           <p className="text-zinc-500 text-sm mt-1">Hệ thống quản trị tài sản cá nhân</p>
+           <div className="flex items-center gap-2 mt-2">
+               <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-300 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest border border-zinc-200 dark:border-zinc-700">
+                   Beta v2.0
+               </span>
+               <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide">Wealth management</p>
+           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+           {/* Primary Action Button: Black/Lime in Light, White/Black in Dark */}
            <button 
              onClick={() => setIsExpenseModalOpen(true)}
-             className="hidden md:flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 px-3 py-2 rounded-full transition-colors text-xs font-bold uppercase tracking-wider shadow-lg"
+             className="hidden md:flex items-center gap-2 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-primary dark:text-zinc-900 border-2 border-transparent px-6 py-3 rounded-full transition-all text-sm font-black uppercase tracking-wider shadow-lg hover:shadow-xl hover:-translate-y-1"
            >
-              <Zap size={16} className="text-zinc-200" fill="currentColor" />
+              <Zap size={18} fill="currentColor" />
               Thu / Chi Nhanh
            </button>
 
-           <button 
-             onClick={togglePrivacyMode}
-             className="p-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
-             title={isPrivacyMode ? "Hiện số dư" : "Ẩn số dư"}
-           >
-              {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
-           </button>
-           
-           <div className="h-8 w-[1px] bg-zinc-800 mx-1 hidden sm:block"></div>
+           <div className="flex bg-white dark:bg-zinc-900/50 p-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 backdrop-blur-md shadow-sm">
+                <button 
+                    onClick={togglePrivacyMode}
+                    className="p-3 rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
+                    title={isPrivacyMode ? "Hiện số dư" : "Ẩn số dư"}
+                >
+                    {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
 
-           <button onClick={logout} className="p-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors">
-              <LogOut size={20} />
-           </button>
+                {/* Theme Toggle Removed - Dark Mode Only */}
+                
+                <div className="w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-1 my-2"></div>
+
+                <button onClick={logout} className="p-3 rounded-full hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 text-zinc-600 dark:text-zinc-400 transition-colors">
+                    <LogOut size={20} />
+                </button>
+           </div>
         </div>
       </header>
 
@@ -152,7 +163,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         
         {/* Row 2 */}
         <div className="col-span-1 md:col-span-2 min-h-[22rem]">
-          <BudgetOverview budgets={INITIAL_BUDGET} />
+          <BudgetOverview budgets={budget} />
         </div>
         <div className="col-span-1 md:col-span-2 min-h-[22rem]">
             <RecentTransactions />
@@ -163,63 +174,65 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       {/* === SECTION 3: INVESTMENT PORTFOLIO === */}
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <TrendingUp size={24} className="text-zinc-400" />
-              Danh mục Đầu tư & Tích sản
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 mt-16">
+          <h2 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">
+              Các Danh Mục Đầu Tư
           </h2>
+          {/* Ghost Button: Outline Style */}
           <button 
               onClick={() => setIsTransModalOpen(true)}
-              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 px-4 py-2 rounded-full transition-colors flex items-center gap-2 font-bold uppercase tracking-wide w-fit"
+              className="text-xs bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-900 dark:text-white border-2 border-zinc-900 dark:border-white px-6 py-3 rounded-full transition-all flex items-center gap-2 font-black uppercase tracking-wide w-fit hover:-translate-y-1"
           >
-              <Plus size={16} />
-              Thêm Giao dịch Mới
+              <Plus size={16} strokeWidth={3} />
+              Thêm Giao dịch
           </button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         
         {/* 1. FUNDS ROW & ALLOCATION CHART */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              {/* Column 1 & 2: Funds List */}
              <div className="col-span-1 md:col-span-2 h-full">
                 <GlassCard 
-                    title={<div className="flex items-center gap-2"><PieIcon size={16} className="text-zinc-400"/><span>Chứng chỉ quỹ (Funds)</span></div>} 
+                    title={<div className="flex items-center gap-2 font-extrabold text-lg text-zinc-900 dark:text-white"><LayoutGrid size={20}/><span>Chứng chỉ Quỹ</span></div>} 
                     className="h-full min-h-[14rem]"
                 >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {fundAssets.map((fund) => (
-                            <div key={fund.symbol} className="flex items-center justify-between p-4 rounded-xl bg-black/20 hover:bg-black/40 transition-colors border border-white/5">
+                            <div key={fund.symbol} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 dark:bg-black/40 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-zinc-800 group">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-sm border border-zinc-700">
+                                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center text-black dark:text-white font-black text-sm border border-zinc-200 dark:border-zinc-700 shadow-sm group-hover:scale-110 transition-transform">
                                         {fund.symbol[0]}
                                     </div>
                                     <div>
-                                        <div className="text-sm font-bold text-white">{fund.symbol}</div>
-                                        <div className="text-xs text-zinc-500">{fund.name}</div>
+                                        <div className="text-base font-extrabold text-zinc-900 dark:text-white">{fund.symbol}</div>
+                                        <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{fund.name}</div>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-sm font-bold text-white">
+                                    <div className="text-base font-extrabold text-zinc-900 dark:text-white">
                                         {isPrivacyMode ? '••••••' : formatCurrency(fund.currentPrice * fund.quantity)}
                                     </div>
-                                    <div className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded inline-block mt-1">
+                                    <div className="text-xs font-bold text-black bg-primary px-2 py-1 rounded-md inline-block mt-1">
                                     Lãi: {isPrivacyMode ? '•••' : formatCurrency((fund.currentPrice - fund.avgPrice) * fund.quantity)}
                                     </div>
                                 </div>
                             </div>
                         ))}
-                        {fundAssets.length === 0 && <div className="text-zinc-500 text-sm italic p-2">Chưa có quỹ nào.</div>}
-                    </div>
-                    <div className="mt-4 text-[10px] text-zinc-600 uppercase tracking-wider text-center border-t border-white/5 pt-2">
-                        Dữ liệu NAV cập nhật tự động
+                        {fundAssets.length === 0 && (
+                            <div className="text-zinc-500 dark:text-zinc-400 text-sm font-medium italic p-8 flex flex-col items-center gap-3 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/20">
+                                <ServerOff size={24} />
+                                <span className="font-bold tracking-wider opacity-60 uppercase">Chưa có dữ liệu quỹ</span>
+                            </div>
+                        )}
                     </div>
                 </GlassCard>
              </div>
              
              {/* Column 3: Allocation Chart (Real Data) */}
              <div className="col-span-1 h-full min-h-[14rem]">
-                <GlassCard title="Cơ cấu tài sản" className="h-full">
+                <GlassCard title={<span className="font-extrabold text-lg text-zinc-900 dark:text-white">Cơ cấu Tài sản</span>} className="h-full">
                     <div className="flex flex-col h-full">
                         <div className="flex-1 min-h-[150px] relative">
                              <ResponsiveContainer width="100%" height="100%">
@@ -229,7 +242,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={40}
-                                        outerRadius={60}
+                                        outerRadius={70}
                                         paddingAngle={5}
                                         dataKey="value"
                                         stroke="none"
@@ -237,43 +250,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                                         endAngle={-270}
                                     >
                                         {allocationData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} stroke={entry.color} strokeWidth={0} />
+                                            <Cell key={`cell-${index}`} fill={hasData ? entry.color : '#e4e4e7'} stroke="none" />
                                         ))}
                                     </Pie>
                                     <Tooltip 
                                         formatter={(value: number) => hasData && !isPrivacyMode ? formatCurrency(value) : (isPrivacyMode ? '••••••' : `${value}%`)}
-                                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#3f3f46', color: '#fff', fontSize: '12px', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#fff' }}
+                                        contentStyle={{ backgroundColor: '#fff', borderColor: '#e4e4e7', color: '#000', fontSize: '12px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', fontWeight: 600 }}
+                                        itemStyle={{ color: 'inherit' }}
                                     />
                                 </PieChart>
                              </ResponsiveContainer>
                              {/* Center Text */}
                              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-80">
-                                 <Wallet size={16} className="text-zinc-500 mb-1" />
+                                 <Wallet size={24} className="text-zinc-300 dark:text-zinc-600 mb-1" strokeWidth={2.5} />
                              </div>
                         </div>
 
                         {/* Legend */}
                         <div className="flex flex-col gap-2 mt-2 px-2 pb-2">
-                             {allocationData.map((item, idx) => {
+                             {hasData ? allocationData.map((item, idx) => {
                                  // Calculate percent
-                                 const percent = hasData 
-                                     ? ((item.value / totalAssets) * 100).toFixed(1) 
-                                     : item.value; // dummy value is already percent
-                                 
+                                 const percent = ((item.value / totalAssets) * 100).toFixed(1);
                                  return (
                                      <div key={idx} className="flex items-center justify-between text-xs">
                                          <div className="flex items-center gap-2">
-                                             <div className="w-2 h-2 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: item.color, boxShadow: `0 0 5px ${item.color}` }}></div>
-                                             <span className="text-zinc-400">{item.name}</span>
+                                             <div className="w-3 h-3 rounded-full border border-black/10 dark:border-white/10 shadow-sm" style={{ backgroundColor: item.color }}></div>
+                                             <span className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wide">{item.name}</span>
                                          </div>
-                                         <span className="font-bold text-white">{percent}%</span>
+                                         <span className="font-extrabold text-zinc-900 dark:text-white">{percent}%</span>
                                      </div>
                                  )
-                             })}
-                             {!hasData && (
-                                 <div className="text-[10px] text-zinc-600 text-center mt-1 italic">
-                                     (Biểu đồ minh họa)
+                             }) : (
+                                 <div className="text-[10px] text-zinc-500 dark:text-zinc-500 text-center mt-1 italic opacity-50 font-medium">
+                                     (Chưa có dữ liệu tài sản)
                                  </div>
                              )}
                         </div>
@@ -284,52 +293,62 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
         {/* 2. STOCKS ROW (Horizontal Scroll with Dots) */}
         <div>
-            <div className="flex items-center gap-2 mb-3 px-1">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Cổ phiếu niêm yết</span>
-                <div className="h-[1px] flex-1 bg-zinc-800"></div>
+            {/* Header without Lines */}
+            <div className="flex items-center justify-between mb-5 px-1">
+                <span className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <List size={20} /> Cổ phiếu niêm yết
+                </span>
+                
+                {/* Arrow Button - Ghost Style */}
+                <button className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-900 dark:hover:bg-white dark:hover:text-black transition-colors">
+                    <ArrowRight size={20} strokeWidth={3}/>
+                </button>
             </div>
             
-            {/* Scroll Container */}
+            {/* Scroll Container with PADDING to prevent Hover Clip */}
             <div 
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex gap-4 overflow-x-auto pb-4 snap-x scrollbar-hide"
+                className="flex gap-4 overflow-x-auto pb-8 pt-4 px-2 -mx-2 snap-x scrollbar-hide"
             >
                 {stockAssets.map((stock) => (
-                    <div key={stock.symbol} className="min-w-[260px] md:min-w-[280px] snap-center h-[230px]">
+                    <div key={stock.symbol} className="min-w-[280px] md:min-w-[300px] snap-center h-[280px]">
                         <StockCard stock={stock} />
                     </div>
                 ))}
                 
                 {/* Empty State / Add New Card */}
                 {stockAssets.length === 0 && (
-                    <div className="min-w-[260px] h-[230px] snap-center flex items-center justify-center border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 text-zinc-500">
-                        Chưa có cổ phiếu
+                    <div className="min-w-[280px] h-[280px] snap-center flex flex-col gap-3 items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/50 text-zinc-400 dark:text-zinc-500 group hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
+                        <ServerOff size={28} />
+                        <span className="text-sm font-extrabold uppercase tracking-wide">Chưa có cổ phiếu</span>
                     </div>
                 )}
                 
-                {/* Add Button as a Card */}
+                {/* Add Button as a Card - Ghost/Transparent */}
                 <button 
                     onClick={() => setIsTransModalOpen(true)}
-                    className="min-w-[80px] md:min-w-[100px] snap-center flex items-center justify-center rounded-2xl border border-dashed border-zinc-800 hover:border-zinc-500/50 hover:bg-zinc-500/5 transition-all group"
+                    className="min-w-[100px] h-[280px] snap-center flex items-center justify-center rounded-3xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-primary hover:bg-primary/5 transition-all group"
                 >
-                    <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-zinc-300">
-                        <Plus size={24} />
+                    <div className="flex flex-col items-center gap-2 text-zinc-300 dark:text-zinc-700 group-hover:text-primary dark:group-hover:text-primary transition-colors">
+                        <Plus size={40} strokeWidth={3} />
                     </div>
                 </button>
             </div>
 
-            {/* Pagination Dots */}
-            <div className="flex items-center justify-center gap-2 mt-2">
-                {Array.from({ length: totalSlides }).map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => scrollToSlide(idx)}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${activeSlide === idx ? 'w-8 bg-white' : 'w-1.5 bg-zinc-800 hover:bg-zinc-700'}`}
-                        aria-label={`Go to item ${idx + 1}`}
-                    />
-                ))}
-            </div>
+            {/* Pagination Dots - Clean */}
+            {stockAssets.length > 0 && (
+                <div className="flex items-center justify-center gap-2 mt-2">
+                    {Array.from({ length: totalSlides }).map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => scrollToSlide(idx)}
+                            className={`h-2 rounded-full transition-all duration-300 ${activeSlide === idx ? 'w-8 bg-zinc-900 dark:bg-primary' : 'w-2 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-600'}`}
+                            aria-label={`Go to item ${idx + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
 
       </div>
@@ -338,9 +357,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       <div className="fixed bottom-6 right-6 md:hidden z-40">
           <button 
             onClick={() => setIsExpenseModalOpen(true)}
-            className="w-14 h-14 rounded-full bg-zinc-800 text-white border border-zinc-700 shadow-2xl shadow-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+            className="w-16 h-16 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black border-2 border-transparent shadow-xl flex items-center justify-center active:scale-95 transition-all hover:scale-110"
           >
-              <Zap size={24} fill="currentColor" />
+              <Zap size={28} fill="currentColor" />
           </button>
       </div>
     </div>

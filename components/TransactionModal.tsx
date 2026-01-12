@@ -54,14 +54,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+      <div className="w-full max-w-lg bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-2xl shadow-hard dark:shadow-2xl overflow-hidden animate-slide-up transition-colors">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
-           <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-               <TrendingUp size={18} className="text-emerald-500" />
+        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+           <h3 className="text-lg font-bold text-zinc-900 dark:text-white tracking-wide flex items-center gap-2">
+               <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-500" />
                Giao dịch Đầu tư
            </h3>
-           <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
              <X size={20} />
            </button>
         </div>
@@ -80,7 +80,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                       required
                       value={formData.date}
                       onChange={e => setFormData({...formData, date: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                  </div>
               </div>
@@ -90,9 +90,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                    <select 
                      value={formData.type}
                      onChange={e => setFormData({...formData, type: e.target.value as TransactionType})}
-                     className={`w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 px-3 text-sm font-bold focus:outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer ${
-                         formData.type === TransactionType.BUY ? 'text-emerald-400' : 
-                         formData.type === TransactionType.SELL ? 'text-rose-400' : 'text-sky-400'
+                     className={`w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 px-3 text-sm font-bold focus:outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer ${
+                         formData.type === TransactionType.BUY ? 'text-emerald-600 dark:text-emerald-400' : 
+                         formData.type === TransactionType.SELL ? 'text-rose-600 dark:text-rose-400' : 'text-sky-600 dark:text-sky-400'
                      }`}
                    >
                      <option value={TransactionType.BUY}>MUA (Buy)</option>
@@ -105,10 +105,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
            </div>
 
            {/* Section 2: Asset Symbol (Input + Suggestions) */}
-           <div className="space-y-2 p-4 bg-zinc-950/50 rounded-xl border border-zinc-800/50">
+           <div className="space-y-2 p-4 bg-zinc-50 dark:bg-zinc-950/50 rounded-xl border border-zinc-200 dark:border-zinc-800/50">
               <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider flex justify-between">
                   <span>Mã Chứng khoán / Quỹ</span>
-                  <span className="text-zinc-600 font-normal normal-case">Nhập mã mới để tạo mới</span>
+                  <span className="text-zinc-400 dark:text-zinc-600 font-normal normal-case">Nhập mã mới để tạo mới</span>
               </label>
               <div className="relative">
                  <Search size={16} className="absolute left-3 top-3.5 text-zinc-500" />
@@ -118,7 +118,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                    value={formData.symbol}
                    onChange={e => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
                    placeholder="VD: FPT, MWG, VCB..."
-                   className="w-full bg-zinc-900 border border-zinc-700 rounded-lg py-3 pl-10 pr-3 text-lg font-bold text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all placeholder-zinc-700 uppercase"
+                   className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg py-3 pl-10 pr-3 text-lg font-bold text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all placeholder-zinc-400 dark:placeholder-zinc-700 uppercase"
                  />
               </div>
               
@@ -129,7 +129,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                      type="button"
                      key={sym}
                      onClick={() => setFormData({...formData, symbol: sym})}
-                     className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${formData.symbol === sym ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700'}`}
+                     className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${formData.symbol === sym ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
                    >
                      {sym}
                    </button>
@@ -151,7 +151,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                       step="any"
                       value={formData.quantity}
                       onChange={e => setFormData({...formData, quantity: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                  </div>
               </div>
@@ -167,7 +167,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                       step="any"
                       value={formData.price}
                       onChange={e => setFormData({...formData, price: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                  </div>
               </div>
@@ -176,8 +176,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
            {/* Total Preview */}
            {totalValue > 0 && (
                <div className="flex justify-between items-center px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                   <span className="text-xs text-emerald-500">Tổng giá trị:</span>
-                   <span className="text-sm font-bold text-emerald-400">{formatCurrency(totalValue)}</span>
+                   <span className="text-xs text-emerald-600 dark:text-emerald-500">Tổng giá trị:</span>
+                   <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalValue)}</span>
                </div>
            )}
 
@@ -190,7 +190,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                    type="text" 
                    value={formData.notes}
                    onChange={e => setFormData({...formData, notes: e.target.value})}
-                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder-zinc-700"
+                   className="w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder-zinc-400 dark:placeholder-zinc-700"
                    placeholder="VD: Tích sản tháng 10..."
                  />
               </div>
@@ -199,7 +199,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
            {/* Submit */}
            <button 
              type="submit"
-             className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
+             className="w-full bg-primary text-black border-2 border-black hover:bg-primary/80 dark:bg-white dark:hover:bg-zinc-200 dark:text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-hard active:translate-y-0.5 active:shadow-none"
            >
              <Save size={18} />
              Lưu Giao Dịch

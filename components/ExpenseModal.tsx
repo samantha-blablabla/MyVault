@@ -123,12 +123,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
         }
       } catch (error) {
           console.error("Gemini Scan Error:", error);
-          // Fallback simulation for demo purposes if API key is missing or fails
-          // setTimeout(() => {
-          //    setAmount('125000');
-          //    setNote('Hóa đơn Highlands Coffee (Fallback)');
-          //    setType(TransactionType.EXPENSE);
-          // }, 1000);
       } finally {
           setIsScanning(false);
       }
@@ -154,7 +148,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full md:max-w-md bg-zinc-900 border-t md:border border-zinc-800 rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden animate-slide-up relative flex flex-col max-h-[90vh]">
+      <div className="w-full md:max-w-md bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-t-2xl md:rounded-2xl shadow-hard dark:shadow-2xl overflow-hidden animate-slide-up relative flex flex-col max-h-[90vh] transition-colors">
         
         {/* Hidden Input for Camera/File */}
         <input 
@@ -184,17 +178,17 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
         )}
 
         {/* Header with Toggle */}
-        <div className="flex-none flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
-           <div className="flex gap-2 p-1 bg-black/20 rounded-lg border border-white/5">
+        <div className="flex-none flex items-center justify-between px-6 py-4 border-b-2 border-black dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+           <div className="flex gap-2 p-1 bg-zinc-200 dark:bg-black/20 rounded-lg border border-zinc-300 dark:border-white/5">
                 <button 
                     onClick={() => setType(TransactionType.EXPENSE)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${isExpense ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/20' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${isExpense ? 'bg-black text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}
                 >
                     <ArrowUpCircle size={14} /> Chi Tiêu
                 </button>
                 <button 
                     onClick={() => setType(TransactionType.INCOME)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${!isExpense ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/20' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${!isExpense ? 'bg-primary text-black border border-black shadow-hard-sm' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}
                 >
                     <ArrowDownCircle size={14} /> Thu Nhập
                 </button>
@@ -205,13 +199,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
                <button 
                  onClick={handleCameraClick}
                  type="button"
-                 className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-full transition-colors relative group"
+                 className="p-2 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-full transition-colors relative group"
                  title="Chụp hóa đơn"
                >
                    <Camera size={22} />
                </button>
 
-               <button onClick={onClose} className="p-2 text-zinc-500 hover:text-white transition-colors">
+               <button onClick={onClose} className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
                  <X size={22} />
                </button>
            </div>
@@ -223,7 +217,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
             
             {/* Image Preview Area */}
             {scannedImage && !isScanning && (
-                <div className="relative w-full h-32 rounded-xl overflow-hidden border border-zinc-700 group">
+                <div className="relative w-full h-32 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 group">
                     <img src={scannedImage} alt="Receipt Preview" className="w-full h-full object-cover opacity-80" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-3">
                         <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
@@ -240,21 +234,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
                 </div>
             )}
 
-            {/* Big Amount Input - Plus Jakarta Sans */}
+            {/* Big Amount Input */}
             <div className="text-center relative py-2">
                 <label className="text-xs text-zinc-500 uppercase font-semibold tracking-wider mb-2 block">
                     Số tiền {isExpense ? '(Chi ra)' : '(Nhận vào)'}
                 </label>
                 <input 
                     type="number" 
-                    autoFocus={!scannedImage} // Don't autofocus if just scanned to prevent keyboard jumping
+                    autoFocus={!scannedImage} 
                     required
                     placeholder="0"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
-                    className={`w-full bg-transparent text-5xl font-bold text-center focus:outline-none placeholder-zinc-800 tracking-tight ${isExpense ? 'text-rose-500' : 'text-emerald-500'}`}
+                    className={`w-full bg-transparent text-5xl font-bold text-center focus:outline-none placeholder-zinc-300 dark:placeholder-zinc-800 tracking-tight ${isExpense ? 'text-black dark:text-white' : 'text-emerald-600 dark:text-primary'}`}
                 />
-                <div className={`text-sm mt-2 font-bold h-5 ${isExpense ? 'text-rose-400' : 'text-emerald-400'}`}>
+                <div className={`text-sm mt-2 font-bold h-5 ${isExpense ? 'text-zinc-400' : 'text-emerald-600 dark:text-primary'}`}>
                     {amount ? (isExpense ? '-' : '+') : ''} {amount ? formatCurrency(Number(amount)) : ''}
                 </div>
             </div>
@@ -266,7 +260,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
                         key={idx}
                         type="button"
                         onClick={() => { setAmount(s.value.toString()); setNote(s.label); }}
-                        className="flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-xs hover:bg-zinc-700 hover:text-white transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white transition-colors"
                     >
                         {s.icon} {s.label}
                     </button>
@@ -280,7 +274,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
                     type="text" 
                     value={note}
                     onChange={e => setNote(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-3 px-4 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-3 px-4 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-secondary dark:focus:border-primary transition-colors placeholder-zinc-400 dark:placeholder-zinc-600"
                     placeholder={isExpense ? "VD: Ăn trưa, Grab..." : "VD: Anh A trả nợ, Thưởng..."}
                 />
             </div>
@@ -288,13 +282,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
         </div>
 
         {/* Footer Actions */}
-        <div className="flex-none p-6 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-sm">
+        <div className="flex-none p-6 border-t-2 border-black dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-sm">
              <button 
              onClick={handleSubmit}
-             className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-xl ${
+             className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-hard active:shadow-none hover:-translate-y-0.5 ${
                  isExpense 
-                 ? 'bg-white text-black hover:bg-zinc-200' 
-                 : 'bg-emerald-500 text-white hover:bg-emerald-400 shadow-emerald-900/20'
+                 ? 'bg-black text-white border-2 border-black dark:bg-white dark:text-black' 
+                 : 'bg-primary text-black border-2 border-black dark:bg-primary dark:text-black'
              }`}
            >
              <Check size={20} />

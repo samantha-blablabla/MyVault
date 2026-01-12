@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType } from '../types';
+import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType, ShoppingPlan } from '../types';
 import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS, TOTAL_INCOME } from '../constants';
 import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats, calculateBudgetProgress } from '../services/financeLogic';
 
@@ -26,7 +26,8 @@ interface FinanceContextType {
   targets: Record<string, number>;
   isPrivacyMode: boolean;
   monthlyIncome: number;
-  transactions: Transaction[]; // EXPOSED NOW
+  transactions: Transaction[];
+  shoppingPlan: ShoppingPlan; // NEW
   
   // Actions
   addTransaction: (tx: Transaction) => void;
@@ -41,6 +42,7 @@ interface FinanceContextType {
   updateBudgetPlan: (totalIncome: number, rules: BudgetRules) => void;
   refreshPrices: () => void;
   togglePrivacyMode: () => void;
+  updateShoppingPlan: (plan: ShoppingPlan) => void; // NEW
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -73,7 +75,24 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   // New State for Income & Rules
   const [monthlyIncome, setMonthlyIncome] = useState<number>(TOTAL_INCOME);
   const [budgetRules, setBudgetRules] = useState<BudgetRules>(DEFAULT_BUDGET_RULES);
-  const [isPrivacyMode, setIsPrivacyMode] = useState(true);
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  
+  // Shopping Plan State
+  const [shoppingPlan, setShoppingPlan] = useState<ShoppingPlan>({ name: '', price: 0, fundSource: 'savings', monthlyContribution: 0 });
+
+  // Enforce Dark Mode on Mount
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    localStorage.removeItem('finvault_theme');
+    
+    // Load Shopping Plan
+    const savedPlan = localStorage.getItem('finvault_shopping_plan');
+    if (savedPlan) {
+        try {
+            setShoppingPlan(JSON.parse(savedPlan));
+        } catch (e) { console.error("Error parsing shopping plan", e); }
+    }
+  }, []);
 
   // 1. Recalculate Budget Allocations whenever Monthly Income OR Rules changes
   useEffect(() => {
@@ -216,6 +235,11 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const togglePrivacyMode = () => {
       setIsPrivacyMode(prev => !prev);
   };
+  
+  const updateShoppingPlan = (plan: ShoppingPlan) => {
+      setShoppingPlan(plan);
+      localStorage.setItem('finvault_shopping_plan', JSON.stringify(plan));
+  };
 
   return (
     <FinanceContext.Provider value={{
@@ -228,7 +252,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       targets,
       isPrivacyMode,
       monthlyIncome,
-      transactions, // Exposed
+      transactions, 
+      shoppingPlan,
       addTransaction,
       addDailyTransaction, 
       deleteTransaction,
@@ -238,9 +263,10 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       addBill,
       removeBill,
       updateTarget,
-      updateBudgetPlan, // Updated Action
+      updateBudgetPlan, 
       refreshPrices,
-      togglePrivacyMode
+      togglePrivacyMode,
+      updateShoppingPlan
     }}>
       {children}
     </FinanceContext.Provider>

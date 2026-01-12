@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, ChevronRight } from 'lucide-react';
+import { Lock, ChevronRight, Zap } from 'lucide-react';
 
 interface LoginProps {
   onLogin: () => void;
@@ -16,8 +16,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     setIsLoading(true);
 
-    // Simulation of NextAuth backend validation
-    // In production, this would POST to /api/auth/callback/credentials
     setTimeout(() => {
       if (email === 'admin@finvault.com' && password === 'admin123') {
         onLogin();
@@ -29,46 +27,49 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#09090b] relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px]"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-[128px]"></div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background dark:bg-background-dark bg-grid-fixed relative overflow-hidden transition-colors duration-300 p-4">
+      
+      {/* Abstract Shapes (Neo-Brutalist Decor) */}
+      <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl opacity-20 animate-float"></div>
+      <div className="absolute bottom-10 right-10 w-64 h-64 bg-zinc-200 dark:bg-white rounded-full blur-3xl opacity-10 animate-float" style={{animationDelay: '1s'}}></div>
+      
+      {/* Main Card */}
+      <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 p-8 rounded-3xl shadow-xl dark:shadow-2xl relative z-10">
+        
+        {/* Floating Icon */}
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-primary rounded-2xl rotate-12 flex items-center justify-center shadow-hard border-2 border-white dark:border-zinc-900">
+            <Lock className="text-black" size={32} />
+        </div>
 
-      <div className="w-full max-w-md p-8 relative z-10">
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="mx-auto w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-4 border border-white/10 backdrop-blur-md">
-            <Lock className="text-emerald-500" size={20} />
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">FinVault Access</h1>
-          <p className="text-zinc-500 text-sm mt-2">Bảo mật cấp độ tài chính</p>
+        <div className="text-center mt-10 mb-8 animate-fade-in">
+          <h1 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter italic">FINVAULT</h1>
+          <p className="text-zinc-500 dark:text-white/60 text-sm mt-1 font-bold uppercase tracking-widest">Access Control</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 animate-slide-up">
           <div className="space-y-1">
-            <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider ml-1">Email</label>
+            <label className="text-xs text-zinc-500 dark:text-white/60 font-black uppercase tracking-wider ml-1">Email Access</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+              className="w-full bg-zinc-50 dark:bg-black/40 border-2 border-zinc-200 dark:border-white/10 rounded-xl px-4 py-4 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-white/30 focus:outline-none focus:border-zinc-900 dark:focus:border-primary font-bold transition-all"
               placeholder="admin@finvault.com"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider ml-1">Password</label>
+            <label className="text-xs text-zinc-500 dark:text-white/60 font-black uppercase tracking-wider ml-1">Passkey</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+              className="w-full bg-zinc-50 dark:bg-black/40 border-2 border-zinc-200 dark:border-white/10 rounded-xl px-4 py-4 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-white/30 focus:outline-none focus:border-zinc-900 dark:focus:border-primary font-bold transition-all"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+            <div className="p-3 rounded-xl bg-red-100 dark:bg-red-500/20 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-200 text-sm text-center font-bold">
               {error}
             </div>
           )}
@@ -76,22 +77,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-medium py-3 rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-zinc-900 dark:bg-primary text-white dark:text-black font-black text-lg py-4 rounded-xl shadow-lg hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed mt-4"
           >
             {isLoading ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span className="w-5 h-5 border-4 border-white/30 border-t-white dark:border-black/30 dark:border-t-black rounded-full animate-spin"></span>
             ) : (
               <>
-                Đăng nhập an toàn <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                ENTER VAULT <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" strokeWidth={3} />
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-            <p className="text-[10px] text-zinc-600 uppercase tracking-widest">
-                Protected by 256-bit AES Encryption
-            </p>
+        <div className="mt-8 text-center opacity-50">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-300 dark:border-white/20">
+                 <Zap size={12} fill="currentColor" className="text-zinc-400 dark:text-white" />
+                 <span className="text-[10px] font-bold text-zinc-400 dark:text-white uppercase tracking-widest">Secured by E2E</span>
+             </div>
         </div>
       </div>
     </div>

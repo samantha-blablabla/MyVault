@@ -47,13 +47,13 @@ export const TargetEditModal: React.FC<TargetEditModalProps> = ({ isOpen, onClos
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+      <div className="w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-slide-up transition-colors">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
-           <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-               <Target size={18} className="text-emerald-500"/> Thiết lập Mục tiêu
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+           <h3 className="text-lg font-bold text-zinc-900 dark:text-white tracking-wide flex items-center gap-2">
+               <Target size={18} className="text-secondary dark:text-primary"/> Thiết lập Mục tiêu
            </h3>
-           <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
              <X size={20} />
            </button>
         </div>
@@ -67,19 +67,19 @@ export const TargetEditModal: React.FC<TargetEditModalProps> = ({ isOpen, onClos
 
            <div className="space-y-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                {availableSymbols.map(symbol => (
-                   <div key={symbol} className="flex items-center justify-between bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                   <div key={symbol} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
                        <div className="flex items-center gap-3">
-                           <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
+                           <div className="w-8 h-8 rounded bg-white dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-secondary dark:text-white border border-zinc-200 dark:border-zinc-700 shadow-sm">
                                {symbol}
                            </div>
-                           <span className="text-sm font-medium text-zinc-300">Số lượng</span>
+                           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Số lượng</span>
                        </div>
                        <input 
                          type="number"
                          min="0"
                          value={localTargets[symbol] || 0}
                          onChange={(e) => handleChange(symbol, e.target.value)}
-                         className="w-24 bg-transparent text-right font-bold text-white focus:outline-none border-b border-zinc-700 focus:border-emerald-500 py-1"
+                         className="w-24 bg-transparent text-right font-bold text-zinc-900 dark:text-white focus:outline-none border-b border-zinc-300 dark:border-zinc-700 focus:border-secondary dark:focus:border-primary py-1"
                        />
                    </div>
                ))}
@@ -88,7 +88,7 @@ export const TargetEditModal: React.FC<TargetEditModalProps> = ({ isOpen, onClos
            {/* Submit */}
            <button 
              type="submit"
-             className="w-full mt-2 bg-white text-black font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98] hover:bg-zinc-200"
+             className="w-full mt-2 bg-secondary dark:bg-primary text-white dark:text-zinc-950 font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98] hover:bg-secondary/90 dark:hover:bg-primary/90"
            >
              <Save size={18} />
              Lưu Thay Đổi

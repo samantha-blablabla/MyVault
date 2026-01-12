@@ -3,26 +3,52 @@ import React, { ReactNode } from 'react';
 interface GlassCardProps {
   children: ReactNode;
   className?: string;
-  title?: ReactNode; // Changed from string to ReactNode
+  title?: ReactNode; 
   action?: ReactNode;
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({ children, className = '', title, action }) => {
+  const hasHeader = Boolean(title || action);
+
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/60 backdrop-blur-md shadow-2xl transition-all duration-300 hover:border-white/10 flex flex-col ${className}`}>
-      {/* Subtle Gradient Glow */}
-      <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-emerald-500/5 blur-3xl"></div>
-      
-      {(title || action) && (
-        <div className="flex-none flex items-center justify-between border-b border-white/5 px-6 py-4">
-          {/* Allow title to be a string or a custom component */}
-          <div className="text-sm font-medium tracking-wide text-zinc-400 uppercase flex items-center gap-2">
-             {title}
+    <div className={`relative overflow-hidden flex flex-col 
+        /* LIGHT MODE: Neo-Brutalism (White BG, Black Text, Hard Shadow) */
+        bg-white 
+        border-2 border-black 
+        shadow-hard 
+        rounded-2xl
+        text-zinc-900
+        
+        /* DARK MODE: Solid Black (No transparency), White Text */
+        dark:bg-zinc-950
+        dark:border-zinc-800 dark:border
+        dark:shadow-none
+        dark:text-zinc-100
+        
+        transition-all duration-300 ease-out
+        hover:-translate-y-1 
+        ${className}`}
+    >
+      {hasHeader && (
+        <div className="flex-none flex items-center justify-between px-6 py-5">
+          <div className="text-sm font-bold tracking-wider text-zinc-900 dark:text-zinc-400 uppercase flex items-center gap-2">
+             {/* Highlight Effect for Title in Light Mode */}
+             <span className="relative z-10 px-1">
+                <span className="absolute inset-0 bg-primary/60 dark:bg-transparent -skew-x-6 rounded-sm -z-10"></span>
+                {title}
+             </span>
           </div>
           {action && <div>{action}</div>}
         </div>
       )}
-      <div className="flex-1 p-6 min-h-0 flex flex-col">
+      
+      {/* 
+         Consistent Padding: 
+         - px-6 (24px) horizontal
+         - pb-6 (24px) bottom
+         - pt-6 (24px) top if no header, else pt-0 (0px) to leverage header spacing
+      */}
+      <div className={`flex-1 px-6 pb-6 min-h-0 flex flex-col ${hasHeader ? 'pt-0' : 'pt-6'}`}>
         {children}
       </div>
     </div>

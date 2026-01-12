@@ -1,3 +1,4 @@
+
 export enum AssetType {
   Stock = 'STOCK',
   Fund = 'FUND',
@@ -58,4 +59,11 @@ export interface UserState {
   isAuthenticated: boolean;
   name: string;
   totalNetWorth: number;
+}
+
+export interface ShoppingPlan {
+    name: string;
+    price: number;
+    fundSource: 'savings' | 'invest'; // Which budget bucket to use
+    monthlyContribution: number; // How much to set aside per month
 }
