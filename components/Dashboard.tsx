@@ -7,6 +7,7 @@ import { BudgetOverview } from './BudgetOverview';
 import { GlassCard } from './ui/GlassCard';
 import { DailySpendableWidget } from './DailySpendableWidget';
 import { InvestmentRoadmap } from './InvestmentRoadmap';
+import { StrategyWidget } from './StrategyWidget';
 import { TransactionModal } from './TransactionModal';
 import { ExpenseModal } from './ExpenseModal'; 
 import { NetWorthCard } from './NetWorthCard';
@@ -14,6 +15,7 @@ import { RecentTransactions } from './RecentTransactions';
 import { ShieldCheck, LogOut, TrendingUp, Plus, Zap, Eye, EyeOff, Wallet, PieChart as PieIcon, ServerOff, Moon, Sun, ArrowRight, LayoutGrid, List } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { MobileNavigation } from './MobileNavigation';
 
 interface DashboardProps {
   user: UserState;
@@ -25,9 +27,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   
+  // Mobile Nav State
+  const [activeTab, setActiveTab] = useState('overview');
+
   // Horizontal Scroll Logic for Stocks
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+
+  // Refs for Scroll to Section (Mobile Nav)
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const strategyRef = useRef<HTMLDivElement>(null);
+  const portfolioRef = useRef<HTMLDivElement>(null);
 
   const stockAssets = portfolio.filter(s => s.type === AssetType.Stock);
   const fundAssets = portfolio.filter(s => s.type === AssetType.Fund);
@@ -62,6 +72,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
       }
   };
 
+  // Handle Mobile Nav Tab Change
+  const handleTabChange = (tabId: string) => {
+      setActiveTab(tabId);
+      if (tabId === 'overview' && overviewRef.current) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (tabId === 'strategy' && strategyRef.current) {
+          strategyRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (tabId === 'portfolio' && portfolioRef.current) {
+          portfolioRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+  };
+
   // --- ALLOCATION CALCULATION ---
   const stockValue = stockAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
   const fundValue = fundAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
@@ -86,7 +108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
   ];
 
   return (
-    <div className="min-h-screen p-4 md:p-8 animate-fade-in pb-24 md:pb-8 overflow-x-hidden selection:bg-primary selection:text-black">
+    <div className="min-h-screen p-4 md:p-8 animate-fade-in pb-48 md:pb-8 overflow-x-hidden selection:bg-primary selection:text-black">
       
       <TransactionModal 
         isOpen={isTransModalOpen} 
@@ -99,9 +121,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         onClose={() => setIsExpenseModalOpen(false)}
         onSubmit={addDailyTransaction}
       />
+      
+      {/* Mobile Navigation */}
+      <MobileNavigation 
+          onAddClick={() => setIsExpenseModalOpen(true)} 
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+      />
 
       {/* Top Bar */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+      <header ref={overviewRef} className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-10 gap-4">
         <div>
            {/* BIG BOLD TYPOGRAPHY */}
            <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tighter flex items-center gap-3">
@@ -112,9 +141,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
            </h1>
            <div className="flex items-center gap-2 mt-2">
                <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-300 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest border border-zinc-200 dark:border-zinc-700">
-                   Beta v2.0
+                   Beta v2.1
                </span>
-               <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide">Wealth management</p>
+               <p className="text-zinc-500 dark:text-zinc-400 text-sm font-semibold tracking-wide">Strategy & Wealth</p>
            </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -147,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         </div>
       </header>
 
-      {/* === SECTION 1 & 2: Overview & Cashflow (Bento Grid) === */}
+      {/* === SECTION 1: Bento Grid (Overview, Daily, Strategy) === */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-min mb-8">
         
         {/* Row 1 */}
@@ -157,34 +186,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         <div className="col-span-1 row-span-1 min-h-[22rem]">
             <DailySpendableWidget />
         </div>
-        <div className="col-span-1 row-span-1 min-h-[22rem]">
-            <InvestmentRoadmap />
+        <div ref={strategyRef} className="col-span-1 md:col-span-1 row-span-1 min-h-[22rem]">
+            <StrategyWidget />
         </div>
         
         {/* Row 2 */}
         <div className="col-span-1 md:col-span-2 min-h-[22rem]">
-          <BudgetOverview budgets={budget} />
+            <InvestmentRoadmap />
         </div>
         <div className="col-span-1 md:col-span-2 min-h-[22rem]">
+            <BudgetOverview budgets={budget} />
+        </div>
+
+        {/* Row 3 - Transactions moved down */}
+        <div className="col-span-1 md:col-span-4 min-h-[22rem]">
             <RecentTransactions />
         </div>
       </div>
 
 
-      {/* === SECTION 3: INVESTMENT PORTFOLIO === */}
+      {/* === SECTION 2: INVESTMENT PORTFOLIO === */}
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 mt-16">
-          <h2 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">
-              Các Danh Mục Đầu Tư
+      <div ref={portfolioRef} className="flex flex-row items-center justify-between mb-6 gap-4 mt-8 md:mt-16">
+          <h2 className="text-2xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase leading-none">
+              Danh Mục Đầu Tư
           </h2>
-          {/* Ghost Button: Outline Style */}
+          {/* Ghost Button: Icon only on Mobile, Full on Desktop */}
           <button 
               onClick={() => setIsTransModalOpen(true)}
-              className="text-xs bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-900 dark:text-white border-2 border-zinc-900 dark:border-white px-6 py-3 rounded-full transition-all flex items-center gap-2 font-black uppercase tracking-wide w-fit hover:-translate-y-1"
+              className="group bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-900 dark:text-white border-2 border-zinc-900 dark:border-white rounded-full transition-all flex items-center justify-center gap-2 font-black uppercase tracking-wide hover:-translate-y-1 w-10 h-10 md:w-auto md:h-auto md:px-6 md:py-3"
           >
-              <Plus size={16} strokeWidth={3} />
-              Thêm Giao dịch
+              <Plus size={18} strokeWidth={3} />
+              <span className="hidden md:inline text-xs">Thêm Giao dịch</span>
           </button>
       </div>
 
@@ -353,15 +387,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
       </div>
 
-      {/* Mobile Floating Action Button (Quick Add) */}
-      <div className="fixed bottom-6 right-6 md:hidden z-40">
-          <button 
-            onClick={() => setIsExpenseModalOpen(true)}
-            className="w-16 h-16 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black border-2 border-transparent shadow-xl flex items-center justify-center active:scale-95 transition-all hover:scale-110"
-          >
-              <Zap size={28} fill="currentColor" />
-          </button>
-      </div>
+      {/* Mobile FAB removed in favor of Mobile Navigation */}
     </div>
   );
 };

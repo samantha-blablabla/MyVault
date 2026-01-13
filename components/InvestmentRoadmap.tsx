@@ -93,17 +93,18 @@ export const InvestmentRoadmap: React.FC = () => {
       riskText = 'Cân nhắc. Nên giữ lại 50% quỹ.';
   }
 
+  // --- MOBILE OPTIMIZED TABS ---
   const HeaderAction = (
-     <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 border border-zinc-200 dark:border-zinc-700">
+     <div className="w-full sm:w-auto flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 border border-zinc-200 dark:border-zinc-700">
         <button 
             onClick={() => setActiveTab('stocks')}
-            className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${activeTab === 'stocks' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-black dark:hover:text-white'}`}
+            className={`flex-1 sm:flex-none px-4 sm:px-3 py-1.5 sm:py-1 rounded-md text-xs font-bold transition-all text-center ${activeTab === 'stocks' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-black dark:hover:text-white'}`}
         >
             Tích sản
         </button>
         <button 
             onClick={() => setActiveTab('shopping')}
-            className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${activeTab === 'shopping' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-black dark:hover:text-white'}`}
+            className={`flex-1 sm:flex-none px-4 sm:px-3 py-1.5 sm:py-1 rounded-md text-xs font-bold transition-all text-center ${activeTab === 'shopping' ? 'bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm' : 'text-zinc-500 hover:text-black dark:hover:text-white'}`}
         >
             Mua sắm
         </button>
@@ -125,7 +126,7 @@ export const InvestmentRoadmap: React.FC = () => {
                 {activeTab === 'stocks' ? <Target size={80} className="text-black dark:text-white" /> : <ShoppingBag size={80} className="text-black dark:text-white" />}
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 relative z-10 flex flex-col pt-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 relative z-10 flex flex-col pt-4 pb-2">
                 
                 {/* === TAB 1: STOCKS ROADMAP === */}
                 {activeTab === 'stocks' && (
@@ -212,42 +213,44 @@ export const InvestmentRoadmap: React.FC = () => {
                         {!shoppingPlan.name || editShopping ? (
                             // EDIT MODE
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1">
+                                {/* Mobile: Stack Inputs, Desktop: Grid 2 */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
                                         <label className="text-[10px] uppercase font-bold text-zinc-500">Món đồ</label>
                                         <input 
                                             type="text" 
                                             placeholder="Tên món đồ..." 
                                             value={tempPlanName}
                                             onChange={e => setTempPlanName(e.target.value)}
-                                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 text-xs font-bold text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-primary"
+                                            // text-base on mobile prevents iOS zoom
+                                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-base sm:text-xs font-bold text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-primary transition-all"
                                         />
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-1.5">
                                         <label className="text-[10px] uppercase font-bold text-zinc-500">Giá (VND)</label>
                                         <input 
                                             type="number" 
                                             placeholder="0" 
                                             value={tempPlanPrice}
                                             onChange={e => setTempPlanPrice(e.target.value)}
-                                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 text-xs font-bold text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-primary"
+                                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-base sm:text-xs font-bold text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-primary transition-all"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-zinc-500">Nguồn tiền sử dụng</label>
-                                    <div className="flex gap-2">
-                                        {/* REMOVED PERCENTAGE LABELS AS REQUESTED */}
+                                    {/* Mobile: Grid 2 for even width, Desktop: Same */}
+                                    <div className="grid grid-cols-2 gap-3">
                                         <button 
                                             onClick={() => setTempSource('savings')}
-                                            className={`flex-1 py-2 rounded-lg text-xs font-bold border ${tempSource === 'savings' ? 'bg-secondary text-white dark:bg-primary dark:text-black border-transparent' : 'border-zinc-200 dark:border-zinc-700 text-zinc-500'}`}
+                                            className={`py-3 sm:py-2.5 rounded-xl text-xs font-bold border transition-colors shadow-sm ${tempSource === 'savings' ? 'bg-secondary text-white dark:bg-primary dark:text-black border-transparent shadow-md' : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 bg-white dark:bg-zinc-900'}`}
                                         >
                                             Quỹ Dự phòng
                                         </button>
                                         <button 
                                             onClick={() => setTempSource('invest')}
-                                            className={`flex-1 py-2 rounded-lg text-xs font-bold border ${tempSource === 'invest' ? 'bg-secondary text-white dark:bg-primary dark:text-black border-transparent' : 'border-zinc-200 dark:border-zinc-700 text-zinc-500'}`}
+                                            className={`py-3 sm:py-2.5 rounded-xl text-xs font-bold border transition-colors shadow-sm ${tempSource === 'invest' ? 'bg-secondary text-white dark:bg-primary dark:text-black border-transparent shadow-md' : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 bg-white dark:bg-zinc-900'}`}
                                         >
                                             Quỹ Đầu tư
                                         </button>
@@ -258,87 +261,91 @@ export const InvestmentRoadmap: React.FC = () => {
                                 </div>
 
                                 {/* SLIDER FOR MONTHLY CONTRIBUTION */}
-                                <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                                <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
                                      <div className="flex justify-between items-end">
                                         <label className="text-[10px] uppercase font-bold text-zinc-500">Trích lập hàng tháng</label>
-                                        <span className={`text-sm font-black ${riskLevel === 'danger' ? 'text-rose-500' : 'text-primary'}`}>
+                                        <span className={`text-base sm:text-sm font-black ${riskLevel === 'danger' ? 'text-rose-500' : 'text-primary'}`}>
                                             {formatCurrency(Number(tempContribution))}
                                         </span>
                                      </div>
-                                     <input 
-                                        type="range"
-                                        min="0"
-                                        max={maxAvailable}
-                                        step="100000"
-                                        value={tempContribution}
-                                        onChange={(e) => setTempContribution(Number(e.target.value))}
-                                        className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${
-                                            riskLevel === 'danger' ? 'bg-rose-900 accent-rose-500' : 
-                                            riskLevel === 'warning' ? 'bg-amber-900 accent-amber-500' : 
-                                            'bg-zinc-800 accent-primary'
-                                        }`}
-                                     />
+                                     <div className="px-1">
+                                         <input 
+                                            type="range"
+                                            min="0"
+                                            max={maxAvailable}
+                                            step="100000"
+                                            value={tempContribution}
+                                            onChange={(e) => setTempContribution(Number(e.target.value))}
+                                            className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${
+                                                riskLevel === 'danger' ? 'bg-rose-900 accent-rose-500' : 
+                                                riskLevel === 'warning' ? 'bg-amber-900 accent-amber-500' : 
+                                                'bg-zinc-800 accent-primary'
+                                            }`}
+                                         />
+                                     </div>
                                      
                                      {/* SMART ADVISOR BOX */}
-                                     <div className={`p-2 rounded border text-[10px] flex items-start gap-2 ${
+                                     <div className={`p-3 rounded-xl border text-[11px] sm:text-[10px] flex items-start gap-2 leading-relaxed ${
                                          riskLevel === 'danger' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' :
                                          riskLevel === 'warning' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
                                          'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                                      }`}>
-                                         {riskLevel === 'danger' ? <AlertTriangle size={14} className="shrink-0 mt-0.5" /> : 
-                                          riskLevel === 'warning' ? <AlertTriangle size={14} className="shrink-0 mt-0.5" /> :
-                                          <CheckCircle size={14} className="shrink-0 mt-0.5" />}
+                                         {riskLevel === 'danger' ? <AlertTriangle size={16} className="shrink-0 mt-0.5" /> : 
+                                          riskLevel === 'warning' ? <AlertTriangle size={16} className="shrink-0 mt-0.5" /> :
+                                          <CheckCircle size={16} className="shrink-0 mt-0.5" />}
                                          <span>{riskText}</span>
                                      </div>
                                 </div>
 
                                 <button 
                                     onClick={saveShoppingPlan}
-                                    className="w-full bg-black text-white dark:bg-white dark:text-black font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 mt-2"
+                                    className="w-full bg-black text-white dark:bg-white dark:text-black font-bold py-3.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 mt-2 shadow-lg active:scale-[0.98] transition-transform"
                                 >
-                                    <Calculator size={16} /> Lập kế hoạch
+                                    <Calculator size={18} /> Lập kế hoạch
                                 </button>
                                 {shoppingPlan.name && (
-                                    <button onClick={() => setEditShopping(false)} className="w-full text-xs text-zinc-500 hover:text-white underline">Hủy bỏ</button>
+                                    <button onClick={() => setEditShopping(false)} className="w-full text-xs text-zinc-500 hover:text-white underline py-3">Hủy bỏ</button>
                                 )}
                             </div>
                         ) : (
                             // VIEW MODE (THE "PLAN DISPLAY")
                             <div className="flex flex-col h-full animate-slide-up">
                                 
-                                {/* 1. Header: Item & Cost */}
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shadow-sm">
-                                            <ShoppingBag size={20} className="text-zinc-900 dark:text-white" />
-                                        </div>
-                                        <div>
-                                            <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Mục tiêu</div>
-                                            <div className="text-base font-black text-zinc-900 dark:text-white leading-tight">{shoppingPlan.name}</div>
+                                {/* 1. Header: Item & Cost (Optimized for Mobile) */}
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex gap-3">
+                                            <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shadow-sm shrink-0">
+                                                <ShoppingBag size={24} className="text-zinc-900 dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Mục tiêu</div>
+                                                <div className="text-lg font-black text-zinc-900 dark:text-white leading-tight line-clamp-2">{shoppingPlan.name}</div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Giá trị</div>
-                                        <div className="text-base font-black text-zinc-900 dark:text-white">
+                                    
+                                    <div className="pl-[3.75rem]">
+                                         <div className="text-lg font-black text-zinc-900 dark:text-white">
                                             {isPrivacyMode ? '••••••' : formatCurrency(shoppingPlan.price)}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* 2. Main Stat: Monthly Installment */}
-                                <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 mb-4 relative overflow-hidden group">
+                                <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 mb-4 relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-3 opacity-10">
-                                        <Calendar size={64} className="text-zinc-900 dark:text-white" />
+                                        <Calendar size={80} className="text-zinc-900 dark:text-white" />
                                     </div>
                                     <div className="relative z-10">
                                         <div className="text-xs text-zinc-500 dark:text-zinc-400 uppercase font-bold mb-1">Cần trích lập hàng tháng</div>
-                                        <div className="text-2xl font-black text-primary flex items-baseline gap-2">
+                                        <div className="text-3xl font-black text-primary flex flex-wrap items-baseline gap-2">
                                             {formatCurrency(contribution)} 
-                                            <span className="text-xs text-zinc-500 dark:text-zinc-500 font-bold">/ tháng</span>
+                                            <span className="text-xs text-zinc-500 dark:text-zinc-500 font-bold whitespace-nowrap opacity-60">/ tháng</span>
                                         </div>
-                                        <div className="mt-2 text-[10px] text-zinc-500 flex items-center gap-1">
-                                            <Wallet size={10} /> 
-                                            Trích từ quỹ <span className="font-bold text-zinc-900 dark:text-white">{actualSourceCat?.name.split('(')[0]}</span>
+                                        <div className="mt-3 text-[11px] text-zinc-500 flex items-center gap-1.5 bg-zinc-200/50 dark:bg-zinc-800/50 w-fit px-2 py-1 rounded-md">
+                                            <Wallet size={12} /> 
+                                            Trích từ <span className="font-bold text-zinc-900 dark:text-white">{actualSourceCat?.name.split('(')[0]}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -347,15 +354,15 @@ export const InvestmentRoadmap: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-3 mb-4">
                                     <div className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                                         <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Thời gian</div>
-                                        <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1">
-                                            <Hourglass size={12} className="text-secondary dark:text-primary"/> 
+                                        <div className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                            <Hourglass size={14} className="text-secondary dark:text-primary"/> 
                                             {monthsNum} tháng
                                         </div>
                                     </div>
                                     <div className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                                         <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Hoàn thành</div>
-                                        <div className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1">
-                                            <CheckCircle size={12} className="text-emerald-500"/> 
+                                        <div className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                            <CheckCircle size={14} className="text-emerald-500"/> 
                                             {endDateString}
                                         </div>
                                     </div>
@@ -367,7 +374,7 @@ export const InvestmentRoadmap: React.FC = () => {
                                         <span>Bắt đầu</span>
                                         <span>Mục tiêu</span>
                                     </div>
-                                    <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className="h-3 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                         <div className="h-full bg-zinc-300 dark:bg-zinc-700 w-[2%] rounded-full"></div> 
                                     </div>
                                     <div className="text-center text-[10px] text-zinc-400 italic mt-1">
@@ -379,7 +386,7 @@ export const InvestmentRoadmap: React.FC = () => {
 
                                 <button 
                                     onClick={() => setEditShopping(true)}
-                                    className="w-full mt-2 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-lg transition-all"
+                                    className="w-full mt-4 py-3.5 sm:py-2 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-xl transition-all"
                                 >
                                     Điều chỉnh kế hoạch
                                 </button>
