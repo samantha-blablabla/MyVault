@@ -1,6 +1,6 @@
 import { AssetType, BudgetCategory, FixedBill, Transaction, TransactionType, StockData } from './types';
 
-export const TOTAL_INCOME = 0; // Set to 0, will be updated by user/backend
+export const TOTAL_INCOME = 50000000; // Default 50M for demo
 
 // Default Budget Structure
 // Theme Update: Neo-Brutalism
@@ -12,7 +12,7 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
     id: 'needs',
     name: 'Thiết yếu (50%)',
     allocated: 0,
-    spent: 0, 
+    spent: 0,
     color: '#18181b', // Black
     percentage: 50
   },
@@ -20,7 +20,7 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
     id: 'invest',
     name: 'Đầu tư (30%)',
     allocated: 0,
-    spent: 0, 
+    spent: 0,
     color: '#cafc01', // Primary (Lime)
     percentage: 30
   },
@@ -28,7 +28,7 @@ export const INITIAL_BUDGET: BudgetCategory[] = [
     id: 'savings',
     name: 'Dự phòng (20%)',
     allocated: 0,
-    spent: 0, 
+    spent: 0,
     color: '#a1a1aa', // Zinc 400 (Grey)
     percentage: 20
   }

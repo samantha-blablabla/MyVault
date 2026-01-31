@@ -1,47 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { Dashboard } from './components/Dashboard';
-import { Login } from './components/Login';
+import { OverviewView } from './components/views/OverviewView';
+import { AssetsView } from './components/views/AssetsView';
+import { PlanningView } from './components/views/PlanningView';
+import { HistoryView } from './components/views/HistoryView';
+
+import { Login } from './components/auth/Login';
 import { UserState } from './types';
-import { FinanceProvider } from './context/FinanceContext';
+import { FinanceProvider, useFinance } from './context/FinanceContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AppLayout } from './components/layout/AppLayout';
+import { TransactionModal } from './components/modals/TransactionModal';
+import { ExpenseModal } from './components/modals/ExpenseModal';
 
-const App: React.FC = () => {
-  // BYPASS LOGIN: Set default isAuthenticated to true
-  const [user, setUser] = useState<UserState>({
-    isAuthenticated: true, 
-    name: 'Admin User',
-    totalNetWorth: 0,
-  });
+const AppContent: React.FC = () => {
+  const [activeView, setActiveView] = useState('overview');
+  const [isTransModalOpen, setIsTransModalOpen] = useState(false);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
-  const [loading, setLoading] = useState(false);
+  const { addTransaction, addDailyTransaction, logout } = useFinance();
 
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('finvault_auth');
-    if (storedAuth === 'true') {
-      setUser((prev) => ({ ...prev, isAuthenticated: true, name: 'Admin User' }));
+  const renderView = () => {
+    switch (activeView) {
+      case 'overview': return <OverviewView />;
+      case 'assets': return <AssetsView />;
+      case 'planning': return <PlanningView />;
+      case 'history': return <HistoryView />;
+      default: return <OverviewView />;
     }
-    setLoading(false);
-  }, []);
-
-  const handleLogin = () => {
-    localStorage.setItem('finvault_auth', 'true');
-    setUser({ isAuthenticated: true, name: 'Admin User', totalNetWorth: 0 });
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem('finvault_auth');
-    setUser({ isAuthenticated: false, name: '', totalNetWorth: 0 });
-  };
-
-  if (loading) return null;
 
   return (
-    <FinanceProvider>
-      {user.isAuthenticated ? (
-        <Dashboard user={user} logout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
-    </FinanceProvider>
+    <AppLayout
+      activeView={activeView}
+      onViewChange={setActiveView}
+      onAddClick={() => setIsExpenseModalOpen(true)}
+      onLogout={logout}
+    >
+      {renderView()}
+
+      {/* Global Modals */}
+      <TransactionModal
+        isOpen={isTransModalOpen}
+        onClose={() => setIsTransModalOpen(false)}
+        onSubmit={addTransaction}
+      />
+
+      <ExpenseModal
+        isOpen={isExpenseModalOpen}
+        onClose={() => setIsExpenseModalOpen(false)}
+        onSubmit={addDailyTransaction}
+      />
+    </AppLayout>
+  );
+};
+
+// Router Logic to check Auth
+const AppRouter: React.FC = () => {
+  const { user, login } = useFinance();
+  if (!user.isAuthenticated) {
+    return <Login onLogin={() => login('Admin User')} />;
+  }
+  return <AppContent />;
+};
+
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <FinanceProvider>
+        <AppRouter />
+      </FinanceProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -1,0 +1,17 @@
+name = "finvault-updater"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Bind to the EXISTING D1 database
+[[d1_databases]]
+binding = "DB"
+database_name = "finvault-db"
+database_id = "9c088e26-7053-41e9-9e43-03ea9fd36f9a"
+
+# Cron Triggers (UTC Time)
+# 02:00 UTC = 09:00 VN
+# 08:00 UTC = 15:00 VN (approx end of trading session + buffer)
+# Run every minute (*), between hour 2 and 8, every day (*)
+# But actually stock market is Mon-Fri.
+[triggers]
+crons = ["* 2-8 * * 1-5"]

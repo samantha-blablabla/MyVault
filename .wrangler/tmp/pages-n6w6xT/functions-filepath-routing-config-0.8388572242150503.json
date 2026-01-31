@@ -1,0 +1,21 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/transactions",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/transactions.ts:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/transactions",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/transactions.ts:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

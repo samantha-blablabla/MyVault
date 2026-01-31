@@ -1,0 +1,37 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/signals",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/signals.ts:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/signals",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/signals.ts:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/transactions",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/transactions.ts:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/transactions",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/transactions.ts:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

@@ -7,26 +7,26 @@ import { FixedBill, Transaction, TransactionType, StockData, AssetType, BudgetCa
  * Formula: (Total Budget - Fixed Bills - Already Spent) / Days Remaining
  */
 export const calculateDailySpendable = (
-  totalBudget: number,
-  spentSoFar: number,
-  fixedBills: FixedBill[]
+    totalBudget: number,
+    spentSoFar: number,
+    fixedBills: FixedBill[]
 ): { dailyAmount: number, daysRemaining: number, remainingBudget: number } => {
-  const today = new Date();
-  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const daysRemaining = Math.max(1, lastDayOfMonth.getDate() - today.getDate());
+    const today = new Date();
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const daysRemaining = Math.max(1, lastDayOfMonth.getDate() - today.getDate());
 
-  // Calculate unpaid bills
-  const unpaidBillsAmount = fixedBills
-    .filter(bill => !bill.isPaid)
-    .reduce((sum, bill) => sum + bill.amount, 0);
+    // Calculate unpaid bills
+    const unpaidBillsAmount = fixedBills
+        .filter(bill => !bill.isPaid)
+        .reduce((sum, bill) => sum + bill.amount, 0);
 
-  // Total "committed" money (spent + bills you MUST pay)
-  const remainingBudget = totalBudget - spentSoFar - unpaidBillsAmount;
-  
-  // If negative, you overspent
-  const dailyAmount = remainingBudget > 0 ? remainingBudget / daysRemaining : 0;
+    // Total "committed" money (spent + bills you MUST pay)
+    const remainingBudget = totalBudget - spentSoFar - unpaidBillsAmount;
 
-  return { dailyAmount, daysRemaining, remainingBudget };
+    // If negative, you overspent
+    const dailyAmount = remainingBudget > 0 ? remainingBudget / daysRemaining : 0;
+
+    return { dailyAmount, daysRemaining, remainingBudget };
 };
 
 /**
@@ -43,12 +43,12 @@ export const calculateBudgetProgress = (
     transactions.forEach(tx => {
         const txDate = new Date(tx.date);
         const now = new Date();
-        
+
         // Only count transactions in current month for the Budget Display
         if (txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear()) {
-             if (tx.type === TransactionType.EXPENSE) {
+            if (tx.type === TransactionType.EXPENSE) {
                 totalNeedsSpent += tx.price;
-            } 
+            }
             else if (tx.type === TransactionType.INCOME) {
                 totalNeedsSpent -= tx.price;
             }
@@ -109,14 +109,14 @@ export const getMonthlyHistory = (transactions: Transaction[], income: number) =
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
         const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
         // Short month name for chart
-        const monthName = `T${d.getMonth() + 1}`; 
+        const monthName = `T${d.getMonth() + 1}`;
         history[key] = { month: monthName, needs: 0, invest: 0, savings: 0 };
     }
 
     transactions.forEach(tx => {
         const d = new Date(tx.date);
         const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
-        
+
         if (history[key]) {
             if (tx.type === TransactionType.EXPENSE) {
                 history[key].needs += tx.price;
@@ -187,65 +187,75 @@ export const getFinancialAdvice = (historyData: any[], currentBudgetRules: any) 
  * Now accepts 'targets' as a parameter to allow dynamic updates from UI.
  */
 export const processPortfolioFromTransactions = (
-  transactions: Transaction[],
-  marketPrices: Record<string, number>,
-  priceHistory: Record<string, number[]>,
-  targets: Record<string, number> // ADDED: Dynamic Targets
+    transactions: Transaction[],
+    marketPrices: Record<string, number>,
+    priceHistory: Record<string, number[]>,
+    targets: Record<string, number> // ADDED: Dynamic Targets
 ): StockData[] => {
-  const portfolioMap = new Map<string, StockData>();
+    const portfolioMap = new Map<string, StockData>();
 
-  const assetTypes: Record<string, AssetType> = {
-      'TCB': AssetType.Stock, 'MBB': AssetType.Stock, 'HPG': AssetType.Stock, 'CTR': AssetType.Stock,
-      'VNDAF': AssetType.Fund, 'DFIX': AssetType.Fund
-  };
-  const names: Record<string, string> = {
-      'TCB': 'Techcombank', 'MBB': 'MB Bank', 'HPG': 'Hoa Phat Group', 'CTR': 'Viettel Constr',
-      'VNDAF': 'VNDirect Active Fund', 'DFIX': 'Dragon Capital Bond'
-  };
+    const assetTypes: Record<string, AssetType> = {
+        'TCB': AssetType.Stock, 'MBB': AssetType.Stock, 'HPG': AssetType.Stock, 'CTR': AssetType.Stock,
+        'VNDAF': AssetType.Fund, 'DFIX': AssetType.Fund
+    };
+    const names: Record<string, string> = {
+        'TCB': 'Techcombank', 'MBB': 'MB Bank', 'HPG': 'Hoa Phat Group', 'CTR': 'Viettel Constr',
+        'VNDAF': 'VNDirect Active Fund', 'DFIX': 'Dragon Capital Bond'
+    };
 
-  // Process Transactions
-  transactions.forEach(tx => {
-    // IGNORE EXPENSES and INCOME in Portfolio Calculation
-    if (tx.type === TransactionType.EXPENSE || tx.type === TransactionType.INCOME) return;
+    // Process Transactions
+    transactions.forEach(tx => {
+        // IGNORE EXPENSES and INCOME in Portfolio Calculation
+        if (tx.type === TransactionType.EXPENSE || tx.type === TransactionType.INCOME) return;
 
-    if (!portfolioMap.has(tx.symbol)) {
-      portfolioMap.set(tx.symbol, {
-        symbol: tx.symbol,
-        name: names[tx.symbol] || tx.symbol,
-        quantity: 0,
-        avgPrice: 0,
-        currentPrice: marketPrices[tx.symbol] || 0,
-        history: priceHistory[tx.symbol] || [],
-        type: assetTypes[tx.symbol] || AssetType.Stock,
-        targetQuantity: targets[tx.symbol] || 0 // Use dynamic target
-      });
-    }
+        if (!portfolioMap.has(tx.symbol)) {
+            portfolioMap.set(tx.symbol, {
+                symbol: tx.symbol,
+                name: names[tx.symbol] || tx.symbol,
+                quantity: 0,
+                avgPrice: 0,
+                currentPrice: marketPrices[tx.symbol] || 0,
+                // Synthetic History Generation for UI Aesthetics
+                history: (priceHistory[tx.symbol] && priceHistory[tx.symbol].length > 0)
+                    ? priceHistory[tx.symbol]
+                    : Array.from({ length: 20 }, (_, i) => {
+                        const price = marketPrices[tx.symbol] || 10000;
+                        // Generate a random wavy line ending at current price
+                        // Trend based on index: generally moving towards current price?
+                        // Just random noise around the price is enough for 'sparkline'
+                        const noise = (Math.random() - 0.5) * (price * 0.05);
+                        return price + noise;
+                    }),
+                type: assetTypes[tx.symbol] || AssetType.Stock,
+                targetQuantity: targets[tx.symbol] || 0 // Use dynamic target
+            });
+        }
 
-    const stock = portfolioMap.get(tx.symbol)!;
+        const stock = portfolioMap.get(tx.symbol)!;
 
-    if (tx.type === TransactionType.BUY) {
-      // Logic: New Avg = ((Old Qty * Old Avg) + (New Qty * Buy Price)) / Total Qty
-      const totalCost = (stock.quantity * stock.avgPrice) + (tx.quantity * tx.price);
-      stock.quantity += tx.quantity;
-      stock.avgPrice = totalCost / stock.quantity;
-    } 
-    // SELL logic can be added here (Realized PnL)
-  });
+        if (tx.type === TransactionType.BUY) {
+            // Logic: New Avg = ((Old Qty * Old Avg) + (New Qty * Buy Price)) / Total Qty
+            const totalCost = (stock.quantity * stock.avgPrice) + (tx.quantity * tx.price);
+            stock.quantity += tx.quantity;
+            stock.avgPrice = totalCost / stock.quantity;
+        }
+        // SELL logic can be added here (Realized PnL)
+    });
 
-  // Calculate PnL and convert to array
-  return Array.from(portfolioMap.values()).map(stock => {
-      stock.marketValue = stock.quantity * stock.currentPrice;
-      stock.pnl = (stock.currentPrice - stock.avgPrice) * stock.quantity;
-      stock.pnlPercent = ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100;
-      // Ensure target is set even if not in map initially (for updates)
-      stock.targetQuantity = targets[stock.symbol] || 0;
-      return stock;
-  });
+    // Calculate PnL and convert to array
+    return Array.from(portfolioMap.values()).map(stock => {
+        stock.marketValue = stock.quantity * stock.currentPrice;
+        stock.pnl = (stock.currentPrice - stock.avgPrice) * stock.quantity;
+        stock.pnlPercent = ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100;
+        // Ensure target is set even if not in map initially (for updates)
+        stock.targetQuantity = targets[stock.symbol] || 0;
+        return stock;
+    });
 };
 
 /**
  * Calculates Net Dividend after 5% Tax
  */
 export const calculateNetDividend = (grossAmount: number): number => {
-  return grossAmount * 0.95; 
+    return grossAmount * 0.95;
 };

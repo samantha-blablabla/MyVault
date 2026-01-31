@@ -1,54 +1,56 @@
 import { StockData } from "../types";
 import { INITIAL_PORTFOLIO } from "../constants";
 
-/**
- * CLOUDFLARE D1 INTEGRATION GUIDE:
- * 
- * Base API URL for your Cloudflare Worker/Pages Function.
- * In development, this might point to localhost:8787
- * In production, this points to your domain.
- */
-// const API_BASE_URL = '/api'; 
+const API_BASE_URL = '/api';
 
 /**
- * FETCH PORTFOLIO (READ)
- * Connects to D1: SELECT * FROM assets WHERE user_id = ?
+ * FETCH TRANSACTIONS (READ)
  */
-export const getPortfolioData = async (): Promise<StockData[]> => {
-  // TODO: Uncomment when Cloudflare Backend is ready
-  /*
+export const getTransactions = async (): Promise<any[]> => {
   try {
-      const response = await fetch(`${API_BASE_URL}/portfolio`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      return await response.json();
+    const response = await fetch(`${API_BASE_URL}/transactions`);
+    if (!response.ok) throw new Error('Failed to fetch');
+    // D1 returns { results: [], ... } usually if raw, 
+    // but our API returns Response.json(results), so it should be the array directly.
+    // Wait, our API: `return Response.json(results);` which is `[{...}, {...}]`
+    return await response.json();
   } catch (error) {
-      console.error("Failed to fetch from D1, falling back to local data", error);
-      return INITIAL_PORTFOLIO;
+    console.error("Failed to fetch from D1, falling back to local/mock", error);
+    return [];
   }
-  */
-
-  // Fallback / Current State: Simulate API latency
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(INITIAL_PORTFOLIO);
-    }, 800);
-  });
 };
 
 /**
  * SYNC TRANSACTION (WRITE)
- * Connects to D1: INSERT INTO transactions (...) VALUES (...)
  */
-export const syncTransactionToD1 = async (transaction: any) => {
-    // TODO: Implement Sync Logic
-    console.log("Syncing to Cloudflare D1:", transaction);
-    /*
-    await fetch(`${API_BASE_URL}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(transaction)
+export const saveTransaction = async (transaction: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(transaction)
     });
-    */
+    if (!response.ok) throw new Error('Failed to save');
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to save to D1", error);
+    throw error;
+  }
+};
+
+
+// --- UTILS ---
+
+// --- MARKET SIGNALS (READ) ---
+export const getMarketSignals = async (): Promise<any[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/signals`);
+    if (!response.ok) throw new Error('Failed to fetch signals');
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch market signals", error);
+    return [];
+  }
 };
 
 // --- UTILS ---
@@ -59,4 +61,18 @@ export const formatCurrency = (amount: number): string => {
     currency: 'VND',
     maximumFractionDigits: 0,
   }).format(amount);
+};
+
+export const getStockPrice = (symbol: string): number => {
+  // This helper might be deprecated if we pass price maps logic directly
+  return 0;
+};
+
+export const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date);
 };
