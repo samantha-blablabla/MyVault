@@ -1,13 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { GlassCard } from '../ui/GlassCard';
 import { Calculator, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '../../services/dataService';
+import { useFinance } from '../../context/FinanceContext';
 
 export const FinancialSimulatorWidget: React.FC = () => {
+    const { budget } = useFinance();
     const [monthlyContribution, setMonthlyContribution] = useState(5000000);
     const [rate, setRate] = useState(10); // 10% annual
     const [years, setYears] = useState(10);
     const [initialAmount, setInitialAmount] = useState(0);
+
+    // Sync with Real Data (Budget Capacity)
+    useEffect(() => {
+        const savings = budget.find(b => b.id === 'savings')?.allocated || 0;
+        const invest = budget.find(b => b.id === 'invest')?.allocated || 0;
+        const totalCapacity = savings + invest;
+
+        if (totalCapacity > 0) {
+            setMonthlyContribution(totalCapacity);
+        }
+    }, [budget]);
 
     const result = useMemo(() => {
         const r = rate / 100 / 12;

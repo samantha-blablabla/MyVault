@@ -210,6 +210,23 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setSpendingStats(calculateSpendingStats(transactions));
   }, [transactions, targets, currentPrices]);
 
+  // 3.5 Auto-Calculate Net Worth
+  useEffect(() => {
+    const portfolioValue = portfolio.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
+    const goalsValue = goals.reduce((sum, goal) => {
+      if (goal.type === 'ASSET' || goal.type === 'SAVINGS') {
+        return sum + goal.currentAmount;
+      }
+      return sum;
+    }, 0);
+
+    const newNetWorth = portfolioValue + goalsValue;
+
+    if (user.totalNetWorth !== newNetWorth) {
+      setUser(prev => ({ ...prev, totalNetWorth: newNetWorth }));
+    }
+  }, [portfolio, goals, user.totalNetWorth]);
+
   // 4. Daily Spendable
   useEffect(() => {
     const needsBudget = budget.find(b => b.id === 'needs');
