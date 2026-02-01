@@ -69,3 +69,17 @@ export interface ShoppingPlan {
   fundSource: 'savings' | 'invest'; // Which budget bucket to use
   monthlyContribution: number; // How much to set aside per month
 }
+
+export interface FinancialGoal {
+  id: string;
+  name: string;
+  type: 'ASSET' | 'SAVINGS' | 'DEBT';
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string; // ISO Date
+  monthlyContribution: number;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'ON_TRACK' | 'AT_RISK' | 'BEHIND';
+  icon?: string;
+  notes?: string;
+}

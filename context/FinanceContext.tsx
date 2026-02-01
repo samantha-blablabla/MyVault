@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType, ShoppingPlan } from '../types';
+import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType, ShoppingPlan, FinancialGoal } from '../types';
 import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS, TOTAL_INCOME } from '../constants';
 import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats, calculateBudgetProgress } from '../services/financeLogic';
 import { getTransactions, saveTransaction, getMarketSignals, deleteTransaction as apiDeleteTransaction, updateTransaction as apiUpdateTransaction } from '../services/dataService';
@@ -33,6 +33,7 @@ interface FinanceContextType {
   monthlyIncome: number;
   transactions: Transaction[];
   shoppingPlan: ShoppingPlan;
+  goals: FinancialGoal[];
 
   // Actions
   login: (name: string) => void; // New
@@ -51,6 +52,9 @@ interface FinanceContextType {
   togglePrivacyMode: () => void;
   updateShoppingPlan: (plan: ShoppingPlan) => void;
   updatePrices: (prices: Record<string, number>) => void; // New method for Real-time updates
+  addGoal: (goal: FinancialGoal) => void;
+  updateGoal: (id: string, goal: FinancialGoal) => void;
+  deleteGoal: (id: string) => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -106,6 +110,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     safeParse('finvault_shopping_plan', { name: '', price: 0, fundSource: 'savings', monthlyContribution: 0 } as ShoppingPlan)
   );
 
+  const [goals, setGoals] = useState<FinancialGoal[]>(() => safeParse('finvault_goals', []));
+
   // Derived State
   const [budget, setBudget] = useState<BudgetCategory[]>(INITIAL_BUDGET);
   const [portfolio, setPortfolio] = useState<StockData[]>([]);
@@ -124,6 +130,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => { localStorage.setItem('finvault_budget_rules', JSON.stringify(budgetRules)); }, [budgetRules]);
   useEffect(() => { localStorage.setItem('finvault_privacy', JSON.stringify(isPrivacyMode)); }, [isPrivacyMode]);
   useEffect(() => { localStorage.setItem('finvault_shopping_plan', JSON.stringify(shoppingPlan)); }, [shoppingPlan]);
+  useEffect(() => { localStorage.setItem('finvault_goals', JSON.stringify(goals)); }, [goals]);
 
 
   // Enforce Dark Mode
@@ -309,6 +316,18 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setCurrentPrices(prev => ({ ...prev, ...newPrices }));
   };
 
+  const addGoal = (goal: FinancialGoal) => {
+    setGoals(prev => [...prev, goal]);
+  };
+
+  const updateGoal = (id: string, updatedGoal: FinancialGoal) => {
+    setGoals(prev => prev.map(g => g.id === id ? updatedGoal : g));
+  };
+
+  const deleteGoal = (id: string) => {
+    setGoals(prev => prev.filter(g => g.id !== id));
+  };
+
   return (
     <FinanceContext.Provider value={{
       user,
@@ -339,7 +358,11 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       refreshPrices,
       togglePrivacyMode,
       updateShoppingPlan,
-      updatePrices
+      updatePrices,
+      goals,
+      addGoal,
+      updateGoal,
+      deleteGoal
     }}>
       {children}
     </FinanceContext.Provider>
