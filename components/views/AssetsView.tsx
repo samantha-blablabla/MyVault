@@ -3,7 +3,8 @@ import { useFinance } from '../../context/FinanceContext';
 import { HoldingsTable } from '../dashboard/HoldingsTable';
 import { FundsTable } from '../dashboard/FundsTable';
 import { GlassCard } from '../ui/GlassCard';
-import { Wallet, TrendingUp, PiggyBank, Plus, RefreshCw, BarChart2, PieChart } from 'lucide-react';
+import { RebalanceModal } from '../modals/RebalanceModal';
+import { Wallet, TrendingUp, PiggyBank, Plus, RefreshCw, BarChart2, PieChart, ArrowRightLeft } from 'lucide-react';
 import { formatCurrency } from '../../services/dataService';
 import { fetchMarketPrices, fetchSharkData } from '../../services/marketData';
 import { TransactionModal } from '../modals/TransactionModal';
@@ -18,6 +19,10 @@ export const AssetsView: React.FC = () => {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [activeTab, setActiveTab] = useState<'PORTFOLIO' | 'SHARK'>('PORTFOLIO');
     const [sharkSignal, setSharkSignal] = useState<string | null>(null);
+
+    // Harvest Feature State
+    const [isRebalanceModalOpen, setIsRebalanceModalOpen] = useState(false);
+    const [marketSignals, setMarketSignals] = useState<any[]>([]);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,6 +59,21 @@ export const AssetsView: React.FC = () => {
             }
             setTimeout(() => setIsLoading(false), 800);
         };
+
+        const fetchSignals = async () => {
+            try {
+                // In Dev: http://localhost:8788/api/signals
+                // In Prod: /api/signals
+                const res = await fetch('/api/signals');
+                if (res.ok) {
+                    const data = await res.json();
+                    setMarketSignals(data);
+                }
+            } catch (e) {
+                console.error("Failed to fetch signals", e);
+            }
+        };
+        fetchSignals();
 
         loadPrices();
 
@@ -120,34 +140,45 @@ export const AssetsView: React.FC = () => {
                     </div>
                 </div>
 
-                {/* TABS */}
-                <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200 dark:border-white/5">
-                    <button
-                        onClick={() => setActiveTab('PORTFOLIO')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'PORTFOLIO'
+                {/* TABS & ACTIONS */}
+                <div className="flex items-center gap-3">
+                    <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900/50 rounded-xl w-fit border border-zinc-200 dark:border-white/5">
+                        <button
+                            onClick={() => setActiveTab('PORTFOLIO')}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'PORTFOLIO'
                                 ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
                                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                            }`}
-                    >
-                        <PieChart size={16} />
-                        Danh mục của tôi
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('SHARK')}
-                        className={`relative flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'SHARK'
+                                }`}
+                        >
+                            <PieChart size={16} />
+                            Danh mục của tôi
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('SHARK')}
+                            className={`relative flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'SHARK'
                                 ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
                                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                            }`}
+                                }`}
+                        >
+                            <BarChart2 size={16} />
+                            Shark Tracker
+                            {/* Notification Badge Logic */}
+                            {sharkSignal && sharkSignal !== 'NEUTRAL' && (
+                                <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${sharkSignal.includes('BUY') ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+                                    <span className={`relative inline-flex rounded-full h-3 w-3 ${sharkSignal.includes('BUY') ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                                </span>
+                            )}
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setIsRebalanceModalOpen(true)}
+                        className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-2 font-bold border border-zinc-200 dark:border-zinc-700/50"
+                        title="Chiến thuật Gặt lúa"
                     >
-                        <BarChart2 size={16} />
-                        Shark Tracker
-                        {/* Notification Badge Logic */}
-                        {sharkSignal && sharkSignal !== 'NEUTRAL' && (
-                            <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${sharkSignal.includes('BUY') ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
-                                <span className={`relative inline-flex rounded-full h-3 w-3 ${sharkSignal.includes('BUY') ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                            </span>
-                        )}
+                        <ArrowRightLeft size={18} />
+                        <span className="hidden md:inline text-sm">Gặt lúa</span>
                     </button>
                 </div>
             </div>
@@ -247,6 +278,13 @@ export const AssetsView: React.FC = () => {
                 onSubmit={handleTransactionSubmit}
                 initialType={modalMode === 'BUY' ? TransactionType.BUY : TransactionType.SELL}
                 initialSymbol={selectedSymbol}
+            />
+
+            <RebalanceModal
+                isOpen={isRebalanceModalOpen}
+                onClose={() => setIsRebalanceModalOpen(false)}
+                portfolio={portfolio}
+                marketSignals={marketSignals}
             />
         </div>
     );
