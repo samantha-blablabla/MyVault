@@ -16,7 +16,6 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
     const [type, setType] = useState<FinancialGoal['type']>('ASSET');
     const [targetAmount, setTargetAmount] = useState('');
     const [currentAmount, setCurrentAmount] = useState('');
-    const [deadline, setDeadline] = useState('');
     const [monthlyContribution, setMonthlyContribution] = useState('');
     const [priority, setPriority] = useState<FinancialGoal['priority']>('MEDIUM');
 
@@ -26,7 +25,6 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
             setType(goalToEdit.type);
             setTargetAmount(goalToEdit.targetAmount.toString());
             setCurrentAmount(goalToEdit.currentAmount.toString());
-            setDeadline(goalToEdit.deadline.split('T')[0]);
             setMonthlyContribution(goalToEdit.monthlyContribution.toString());
             setPriority(goalToEdit.priority);
         } else {
@@ -35,16 +33,45 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
             setType('ASSET');
             setTargetAmount('');
             setCurrentAmount('');
-            setDeadline('');
             setMonthlyContribution('');
             setPriority('MEDIUM');
         }
     }, [goalToEdit, isOpen]);
 
+    // Calculate Estimated Deadline
+    const estimatedMonths = React.useMemo(() => {
+        const target = Number(targetAmount) || 0;
+        const current = Number(currentAmount) || 0;
+        const monthly = Number(monthlyContribution) || 0;
+        const remaining = Math.max(0, target - current);
+
+        if (remaining === 0) return 0;
+        if (monthly <= 0) return Infinity;
+
+        return Math.ceil(remaining / monthly);
+    }, [targetAmount, currentAmount, monthlyContribution]);
+
+    const estimatedDateDisplay = React.useMemo(() => {
+        if (estimatedMonths === 0) return 'Đã hoàn thành';
+        if (estimatedMonths === Infinity) return '---';
+
+        const date = new Date();
+        date.setMonth(date.getMonth() + estimatedMonths);
+        return `Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`;
+    }, [estimatedMonths]);
+
+
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        let deadlineIso = new Date().toISOString();
+        if (estimatedMonths !== Infinity && estimatedMonths > 0) {
+            const d = new Date();
+            d.setMonth(d.getMonth() + estimatedMonths);
+            deadlineIso = d.toISOString();
+        }
 
         const goalData: FinancialGoal = {
             id: goalToEdit ? goalToEdit.id : `goal-${Date.now()}`,
@@ -52,10 +79,10 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
             type,
             targetAmount: Number(targetAmount),
             currentAmount: Number(currentAmount),
-            deadline: new Date(deadline).toISOString(),
+            deadline: deadlineIso,
             monthlyContribution: Number(monthlyContribution),
             priority,
-            status: 'ON_TRACK', // Initial default, dashboard calculation will override
+            status: 'ON_TRACK',
             icon: type === 'ASSET' ? 'home' : type === 'SAVINGS' ? 'piggy-bank' : 'credit-card'
         };
 
@@ -72,7 +99,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
             <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
                     <h3 className="font-bold text-lg text-zinc-900 dark:text-white flex items-center gap-2">
-                        {goalToEdit ? 'Chỉnh sửa Mục tiêu' : 'Thêm Mục tiêu Mới'}
+                        {goalToEdit ? 'Chỉnh sửa Kế hoạch' : 'Lập Kế hoạch Mới'}
                     </h3>
                     <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full transition-colors text-zinc-500">
                         <X size={20} />
@@ -88,7 +115,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
                                 required
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white"
+                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                                 placeholder="Vd: Mua nhà, Xe hơi..."
                             />
                         </div>
@@ -97,7 +124,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
                             <select
                                 value={type}
                                 onChange={e => setType(e.target.value as any)}
-                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white"
+                                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-sm font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                             >
                                 <option value="ASSET">Tài sản</option>
                                 <option value="SAVINGS">Tiết kiệm</option>
@@ -109,7 +136,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
                     {/* Amounts */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-zinc-500">Số tiền mục tiêu</label>
+                            <label className="text-[10px] uppercase font-bold text-zinc-500">Mục tiêu (VND)</label>
                             <div className="relative">
                                 <Target size={14} className="absolute left-3 top-3 text-zinc-400" />
                                 <input
@@ -117,13 +144,13 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
                                     required
                                     value={targetAmount}
                                     onChange={e => setTargetAmount(e.target.value)}
-                                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-9 p-2 text-sm font-bold text-zinc-900 dark:text-white"
+                                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-9 p-2 text-sm font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                                     placeholder="0"
                                 />
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-zinc-500">Hiện có</label>
+                            <label className="text-[10px] uppercase font-bold text-zinc-500">Đã có (VND)</label>
                             <div className="relative">
                                 <Wallet size={14} className="absolute left-3 top-3 text-zinc-400" />
                                 <input
@@ -131,40 +158,37 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goalToEdi
                                     required
                                     value={currentAmount}
                                     onChange={e => setCurrentAmount(e.target.value)}
-                                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-9 p-2 text-sm font-bold text-zinc-900 dark:text-white"
+                                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-9 p-2 text-sm font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                                     placeholder="0"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* Planning */}
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* Auto Calculation Block */}
+                    <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 space-y-3">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-zinc-500">Hạn chót</label>
+                            <label className="text-[10px] uppercase font-bold text-indigo-500 dark:text-indigo-400">Bạn sẽ để dành bao nhiêu / tháng?</label>
                             <div className="relative">
-                                <Calendar size={14} className="absolute left-3 top-3 text-zinc-400" />
-                                <input
-                                    type="date"
-                                    required
-                                    value={deadline}
-                                    onChange={e => setDeadline(e.target.value)}
-                                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-9 p-2 text-sm font-bold text-zinc-900 dark:text-white"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase font-bold text-zinc-500">Tiết kiệm hàng tháng</label>
-                            <div className="relative">
-                                <CreditCard size={14} className="absolute left-3 top-3 text-zinc-400" />
+                                <CreditCard size={14} className="absolute left-3 top-3 text-indigo-400" />
                                 <input
                                     type="number"
                                     required
                                     value={monthlyContribution}
                                     onChange={e => setMonthlyContribution(e.target.value)}
-                                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-9 p-2 text-sm font-bold text-zinc-900 dark:text-white"
-                                    placeholder="0"
+                                    className="w-full bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-500/30 rounded-lg pl-9 p-2 text-lg font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Nhập số tiền..."
                                 />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-1">
+                            <Calendar size={18} className="text-indigo-500" />
+                            <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                                Dự kiến hoàn thành: <br />
+                                <span className="text-base font-bold text-indigo-600 dark:text-indigo-300">
+                                    {estimatedDateDisplay}
+                                </span>
                             </div>
                         </div>
                     </div>

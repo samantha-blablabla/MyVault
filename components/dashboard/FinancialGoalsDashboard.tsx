@@ -27,23 +27,20 @@ export const FinancialGoalsDashboard: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    // Calculate Status Logic
-    const calculateStatus = (goal: FinancialGoal) => {
+    // Calculate Status Logic (Simplified for Stress-Free Mode)
+    const getGoalStatus = (goal: FinancialGoal) => {
         const remaining = goal.targetAmount - goal.currentAmount;
-        if (remaining <= 0) return { status: 'COMPLETED', color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+        if (remaining <= 0) return { label: 'Đã hoàn thành', color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
 
-        const now = new Date();
-        const deadline = new Date(goal.deadline);
-        const monthsLeft = Math.max(0, (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30));
+        const monthly = goal.monthlyContribution;
+        if (monthly <= 0) return { label: 'Đang tạm dừng', color: 'text-zinc-500', bg: 'bg-zinc-100 dark:bg-zinc-800' };
 
-        if (monthsLeft === 0) return { status: 'OVERDUE', color: 'text-rose-500', bg: 'bg-rose-500/10' };
+        const monthsLeft = Math.ceil(remaining / monthly);
+        const date = new Date();
+        date.setMonth(date.getMonth() + monthsLeft);
+        const dateString = `Dự kiến: ${date.getMonth() + 1}/${date.getFullYear()}`;
 
-        const requiredMonthly = remaining / monthsLeft;
-        const diff = goal.monthlyContribution - requiredMonthly;
-
-        if (diff >= 0) return { status: 'ON_TRACK', color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Đúng hạn' };
-        if (diff > -requiredMonthly * 0.2) return { status: 'AT_RISK', color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Cảnh báo' };
-        return { status: 'BEHIND', color: 'text-rose-500', bg: 'bg-rose-500/10', label: 'Chậm' };
+        return { label: dateString, color: 'text-indigo-500', bg: 'bg-indigo-500/10' };
     };
 
     const getIcon = (type: FinancialGoal['type']) => {
@@ -78,7 +75,7 @@ export const FinancialGoalsDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {goals.map(goal => {
                     const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
-                    const status = calculateStatus(goal);
+                    const status = getGoalStatus(goal);
 
                     return (
                         <GlassCard key={goal.id} className="relative group hover:border-indigo-500/30 transition-colors">
@@ -91,12 +88,12 @@ export const FinancialGoalsDashboard: React.FC = () => {
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-bold text-zinc-900 dark:text-white text-lg">{goal.name}</h3>
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${status.bg} ${status.color}`}>
-                                                {status.label || status.status}
+                                                {status.label}
                                             </span>
                                         </div>
                                         <div className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
                                             <Calendar size={12} />
-                                            Hạn: {new Date(goal.deadline).toLocaleDateString('vi-VN')}
+                                            {status.label === 'Đã hoàn thành' ? 'Hoàn tất' : status.label.replace('Dự kiến: ', 'Đích đến: ')}
                                         </div>
                                     </div>
                                 </div>
@@ -119,7 +116,7 @@ export const FinancialGoalsDashboard: React.FC = () => {
                                 <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all duration-1000 ${goal.type === 'DEBT' ? 'bg-rose-500' :
-                                                goal.type === 'SAVINGS' ? 'bg-emerald-500' : 'bg-indigo-500'
+                                            goal.type === 'SAVINGS' ? 'bg-emerald-500' : 'bg-indigo-500'
                                             }`}
                                         style={{ width: `${progress}%` }}
                                     ></div>
