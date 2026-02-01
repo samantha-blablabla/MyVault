@@ -61,8 +61,8 @@ export const FinancialGoalsDashboard: React.FC = () => {
 
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Danh sách Mục tiêu</h2>
-                    <p className="text-sm text-zinc-500">Quản lý lộ trình tài chính của bạn.</p>
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Mục tiêu Tiêu dùng & Tích lũy</h2>
+                    <p className="text-sm text-zinc-500">Quản lý các khoản chi tiêu lớn (Mua nhà, Xe, Cưới hỏi...).</p>
                 </div>
                 <button
                     onClick={handleAddNew}

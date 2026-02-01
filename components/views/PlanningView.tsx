@@ -1,5 +1,5 @@
 import React from 'react';
-import { WealthProjection } from '../dashboard/WealthProjection';
+import { WealthGrowthChart } from '../dashboard/WealthGrowthChart';
 import { FinancialGoalsDashboard } from '../dashboard/FinancialGoalsDashboard';
 import { FinancialSimulatorWidget } from '../dashboard/FinancialSimulatorWidget';
 
@@ -15,9 +15,9 @@ export const PlanningView: React.FC = () => {
                 </p>
             </div>
 
-            {/* Top: Wealth Projection */}
+            {/* Top: Wealth & FIRE Journey */}
             <div>
-                <WealthProjection />
+                <WealthGrowthChart />
             </div>
 
             {/* Main Content Grid */}
