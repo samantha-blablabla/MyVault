@@ -1,141 +1,183 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { StockCard } from '../dashboard/StockCard';
+import { HoldingsTable } from '../dashboard/HoldingsTable';
 import { GlassCard } from '../ui/GlassCard';
-import { LayoutGrid, ServerOff, Wallet } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank, Plus, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '../../services/dataService';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { AssetType } from '../../types';
+import { fetchMarketPrices } from '../../services/marketData';
+import { TransactionModal } from '../modals/TransactionModal';
+import { StockData, TransactionType } from '../../types';
+import { MarketTicker } from '../dashboard/MarketTicker';
 
 export const AssetsView: React.FC = () => {
-    const { portfolio, isPrivacyMode, budget } = useFinance();
-    const stockAssets = portfolio.filter(s => s.type === AssetType.Stock);
-    const fundAssets = portfolio.filter(s => s.type === AssetType.Fund);
+    const { portfolio, budget, addTransaction, fixedBills, dailySpendable, updatePrices } = useFinance();
+    const [isLoading, setIsLoading] = useState(false);
+    const [prices, setPrices] = useState<Record<string, number>>({});
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // --- ALLOCATION CALCULATION ---
-    const stockValue = stockAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
-    const fundValue = fundAssets.reduce((sum, item) => sum + (item.quantity * item.currentPrice), 0);
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<'BUY' | 'SELL'>('BUY');
+    const [selectedSymbol, setSelectedSymbol] = useState('');
 
-    // Calculate Cash (Available Budget + Savings)
-    const needs = budget.find(b => b.id === 'needs');
-    const savings = budget.find(b => b.id === 'savings');
-    const cashValue = (Math.max(0, (needs?.allocated || 0) - (needs?.spent || 0))) + (savings?.allocated || 0);
+    // Derived Stats
+    const totalAssetsValue = portfolio.reduce((sum, item) => sum + (item.marketValue || 0), 0);
+    const totalPnL = portfolio.reduce((sum, item) => sum + (item.pnl || 0), 0);
+    const totalPnLPercent = portfolio.reduce((sum, item) => sum + (item.quantity * item.avgPrice), 0) > 0
+        ? (totalPnL / portfolio.reduce((sum, item) => sum + (item.quantity * item.avgPrice), 0)) * 100
+        : 0;
 
-    const totalAssets = stockValue + fundValue + cashValue;
+    // Buying Power
+    const investBudget = budget.find(b => b.id === 'invest');
+    const buyingPower = (investBudget?.allocated || 0) - (investBudget?.spent || 0);
 
-    // Data for Chart - Dark Mode Colors Only
-    const hasData = totalAssets > 0;
-    const allocationData = hasData ? [
-        { name: 'Cổ phiếu', value: stockValue, color: '#4f46e5' }, // Primary Violet
-        { name: 'CC Quỹ', value: fundValue, color: '#ffffff' },    // White
-        { name: 'Tiền mặt', value: cashValue, color: '#52525b' },  // Zinc 600
-    ] : [
-        { name: 'Cổ phiếu', value: 1, color: '#4f46e5' },
-        { name: 'CC Quỹ', value: 1, color: '#ffffff' },
-        { name: 'Tiền mặt', value: 1, color: '#52525b' },
-    ];
+    // Initial Data Fetch & Auto Auto-Refresh
+    useEffect(() => {
+        const loadPrices = async () => {
+            setIsLoading(true);
+            const symbols = portfolio.map(p => p.symbol);
+            if (symbols.length > 0) {
+                const newPrices = await fetchMarketPrices(symbols);
+                setPrices(newPrices);
+                updatePrices(newPrices);
+            }
+            // Simulate a minimum spin time for visual feedback
+            setTimeout(() => setIsLoading(false), 800);
+        };
+
+        loadPrices();
+
+        // Auto-refresh every 60 seconds
+        const interval = setInterval(loadPrices, 60000);
+        return () => clearInterval(interval);
+    }, [portfolio.length, refreshTrigger]);
+
+    const handleOpenBuy = (asset?: StockData) => {
+        setModalMode('BUY');
+        setSelectedSymbol(asset?.symbol || '');
+        setIsModalOpen(true);
+    };
+
+    const handleOpenSell = (asset: StockData) => {
+        setModalMode('SELL');
+        setSelectedSymbol(asset.symbol);
+        setIsModalOpen(true);
+    };
+
+    const handleTransactionSubmit = (tx: any) => {
+        addTransaction(tx);
+        setIsModalOpen(false);
+        // Trigger refresh after transaction to update values per new quantity
+        setRefreshTrigger(prev => prev + 1);
+    };
 
     return (
-        <div className="space-y-8 animate-fade-in pb-20">
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
-                Tài sản & Đầu tư
-            </h2>
+        <div className="space-y-6 animate-fade-in pb-20">
+            {/* MARKET TICKER */}
+            <div className="-mx-4 -mt-4 md:-mx-8 md:-mt-8 mb-6">
+                <MarketTicker />
+            </div>
 
-            {/* 1. Allocation Chart */}
-            <div className="h-[18rem]">
-                <GlassCard title={<span className="font-bold text-lg text-zinc-900 dark:text-white">Cơ cấu Tài sản</span>} className="h-full">
-                    <div className="flex flex-col h-full">
-                        <div className="flex-1 min-h-[150px] relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={allocationData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={90}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                        startAngle={90}
-                                        endAngle={-270}
-                                    >
-                                        {allocationData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={hasData ? entry.color : '#27272a'} stroke="none" />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value: number) => hasData && !isPrivacyMode ? formatCurrency(value) : (isPrivacyMode ? '••••••' : `${value}%`)}
-                                        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', color: '#fff', fontSize: '12px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)', fontWeight: 600 }}
-                                        itemStyle={{ color: 'inherit' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            {/* Center Text */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-80">
-                                <Wallet size={32} className="text-zinc-300 dark:text-zinc-600 mb-1" strokeWidth={2} />
+            {/* HEADER */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">
+                        Danh mục Đầu tư
+                    </h2>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+                        Quản lý tài sản và hiệu quả sinh lời time-real.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setRefreshTrigger(t => t + 1)}
+                        className="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                        title="Tự động cập nhật mỗi 1 phút"
+                    >
+                        <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
+                    </button>
+
+                    <button
+                        onClick={() => handleOpenBuy()}
+                        className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
+                    >
+                        <Plus size={20} strokeWidth={3} />
+                        <span>Giao dịch Mới</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* 1. PORTFOLIO SUMMARY CARDS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Net Asset Value */}
+                <GlassCard className="bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 border-indigo-500/20">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
+                            <Wallet size={24} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Tổng Tài sản (NAV)</p>
+                            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+                                {formatCurrency(totalAssetsValue)}
+                            </h3>
+                        </div>
+                    </div>
+                </GlassCard>
+
+                {/* Unrealized PnL */}
+                <GlassCard className={totalPnL >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}>
+                    <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl text-white shadow-lg ${totalPnL >= 0 ? 'bg-emerald-500 shadow-emerald-500/30' : 'bg-rose-500 shadow-rose-500/30'}`}>
+                            <TrendingUp size={24} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Lãi / Lỗ tạm tính</p>
+                            <div className="flex items-baseline gap-2">
+                                <h3 className={`text-2xl font-black tracking-tight ${totalPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                    {totalPnL > 0 ? '+' : ''}{formatCurrency(totalPnL)}
+                                </h3>
+                                <span className={`text-xs font-bold ${totalPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                    ({totalPnLPercent.toFixed(2)}%)
+                                </span>
                             </div>
                         </div>
-                        {/* Legend */}
-                        <div className="flex justify-center gap-4 mt-2">
-                            {hasData && allocationData.map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-xs">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-zinc-400">{item.name}</span>
-                                </div>
-                            ))}
+                    </div>
+                </GlassCard>
+
+                {/* Buying Power */}
+                <GlassCard className="bg-zinc-500/5 border-zinc-500/10">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-zinc-500 text-white shadow-lg shadow-zinc-500/30">
+                            <PiggyBank size={24} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Sức mua khả dụng</p>
+                            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+                                {formatCurrency(buyingPower)}
+                            </h3>
                         </div>
                     </div>
                 </GlassCard>
             </div>
 
-
-            {/* 2. STOCKS GRID */}
+            {/* 2. HOLDINGS TABLE */}
             <div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                    Cổ phiếu đang nắm giữ
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {stockAssets.map((stock) => (
-                        <div key={stock.symbol} className="h-[240px]">
-                            <StockCard stock={stock} />
-                        </div>
-                    ))}
-                    {stockAssets.length === 0 && (
-                        <div className="col-span-full h-[200px] flex flex-col gap-3 items-center justify-center border-2 border-dashed border-zinc-800 rounded-3xl text-zinc-500">
-                            <ServerOff size={24} />
-                            <span className="text-sm font-semibold">Chưa có cổ phiếu</span>
-                        </div>
-                    )}
-                </div>
+                <HoldingsTable
+                    assets={portfolio}
+                    onBuy={handleOpenBuy}
+                    onSell={handleOpenSell}
+                    isLoading={isLoading}
+                />
             </div>
 
-            {/* 3. FUNDS LIST */}
-            <div>
-                <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                    Chứng chỉ quỹ
-                </h3>
-                <div className="grid grid-cols-1 gap-3">
-                    {fundAssets.map((fund) => (
-                        <div key={fund.symbol} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-zinc-200 dark:border-white/5 group">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center text-black dark:text-white font-bold text-xs border border-zinc-200 dark:border-zinc-700 shadow-sm">
-                                    {fund.symbol[0]}
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-zinc-900 dark:text-white">{fund.symbol}</div>
-                                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{fund.name}</div>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm font-bold text-zinc-900 dark:text-white">
-                                    {isPrivacyMode ? '••••••' : formatCurrency(fund.currentPrice * fund.quantity)}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            {/* Transaction Modal */}
+            <TransactionModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleTransactionSubmit}
+                initialType={modalMode === 'BUY' ? TransactionType.BUY : TransactionType.SELL}
+                initialSymbol={selectedSymbol}
+            />
         </div>
     );
 };

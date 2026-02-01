@@ -16,7 +16,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onVi
 
     const navItems = [
         { id: 'overview', icon: LayoutGrid, label: 'Tổng quan' },
-        { id: 'assets', icon: PieChart, label: 'Tài sản' },
+        { id: 'investment', icon: PieChart, label: 'Đầu tư' },
         { id: 'planning', icon: Radar, label: 'Kế hoạch' },
         { id: 'history', icon: History, label: 'Lịch sử' },
     ];

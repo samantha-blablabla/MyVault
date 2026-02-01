@@ -48,6 +48,7 @@ interface FinanceContextType {
   refreshPrices: () => void;
   togglePrivacyMode: () => void;
   updateShoppingPlan: (plan: ShoppingPlan) => void;
+  updatePrices: (prices: Record<string, number>) => void; // New method for Real-time updates
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -284,6 +285,10 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setShoppingPlan(plan);
   };
 
+  const updatePrices = (newPrices: Record<string, number>) => {
+    setCurrentPrices(prev => ({ ...prev, ...newPrices }));
+  };
+
   return (
     <FinanceContext.Provider value={{
       user,
@@ -312,7 +317,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       updateBudgetPlan,
       refreshPrices,
       togglePrivacyMode,
-      updateShoppingPlan
+      updateShoppingPlan,
+      updatePrices
     }}>
       {children}
     </FinanceContext.Provider>

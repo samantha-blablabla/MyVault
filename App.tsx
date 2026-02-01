@@ -38,7 +38,7 @@ const AppContent: React.FC = () => {
           onOpenExpense={handleOpenExpense}
         />
       );
-      case 'assets': return <AssetsView />;
+      case 'investment': return <AssetsView />;
       case 'planning': return <PlanningView />;
       case 'history': return <HistoryView />;
       default: return <OverviewView />;

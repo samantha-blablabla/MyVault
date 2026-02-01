@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
-import { X, Save, Calendar, Hash, DollarSign, FileText, Search, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Save, Calendar, Hash, DollarSign, FileText, Search, TrendingUp, RefreshCw } from 'lucide-react';
 import { Transaction, TransactionType, AssetType } from '../../types';
-import { formatCurrency, getStockPrice } from '../../services/dataService';
+import { formatCurrency } from '../../services/dataService';
 import { useFinance } from '../../context/FinanceContext';
+import { fetchMarketPrices } from '../../services/marketData';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (transaction: Transaction) => void;
+  initialType?: TransactionType;
+  initialSymbol?: string;
 }
 
-export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, onSubmit }) => {
+export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, onSubmit, initialType, initialSymbol }) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     symbol: '',
@@ -20,8 +23,50 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
     notes: ''
   });
 
+  const [currentMarketPrice, setCurrentMarketPrice] = useState<number | null>(null);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+
   // Common quick picks
   const SUGGESTED_SYMBOLS = ['TCB', 'MBB', 'HPG', 'CTR', 'VNDAF', 'DFIX'];
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        symbol: initialSymbol || prev.symbol,
+        type: initialType || prev.type
+      }));
+    }
+  }, [isOpen, initialSymbol, initialType]);
+
+  // Auto-fetch price when symbol changes
+  useEffect(() => {
+    const fetchPrice = async () => {
+      if (formData.symbol.length >= 3) {
+        setIsFetchingPrice(true);
+        try {
+          const prices = await fetchMarketPrices([formData.symbol]);
+          const price = prices[formData.symbol];
+          if (price) {
+            setCurrentMarketPrice(price);
+            // Auto-fill if empty
+            if (!formData.price) {
+              setFormData(prev => ({ ...prev, price: price.toString() }));
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch price", e);
+        } finally {
+          setIsFetchingPrice(false);
+        }
+      } else {
+        setCurrentMarketPrice(null);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchPrice, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [formData.symbol]);
 
   if (!isOpen) return null;
 
@@ -92,7 +137,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                   value={formData.type}
                   onChange={e => setFormData({ ...formData, type: e.target.value as TransactionType })}
                   className={`w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 px-3 text-sm font-bold focus:outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer ${formData.type === TransactionType.BUY ? 'text-emerald-600 dark:text-emerald-400' :
-                      formData.type === TransactionType.SELL ? 'text-rose-600 dark:text-rose-400' : 'text-sky-600 dark:text-sky-400'
+                    formData.type === TransactionType.SELL ? 'text-rose-600 dark:text-rose-400' : 'text-sky-600 dark:text-sky-400'
                     }`}
                 >
                   <option value={TransactionType.BUY}>MUA (Buy)</option>
@@ -140,7 +185,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
           {/* Section 3: Values */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Số lượng</label>
+              <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider flex justify-between items-center h-5">
+                <span>Số lượng</span>
+              </label>
               <div className="relative">
                 <Hash size={14} className="absolute left-3 top-3 text-zinc-500" />
                 <input
@@ -156,7 +203,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Giá khớp (VND)</label>
+              <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider flex justify-between items-center h-5">
+                <span>Giá khớp (VND)</span>
+                {currentMarketPrice && (
+                  <span
+                    onClick={() => setFormData(prev => ({ ...prev, price: currentMarketPrice.toString() }))}
+                    className="cursor-pointer text-emerald-500 hover:text-emerald-400"
+                  >
+                    TT: {formatCurrency(currentMarketPrice)}
+                  </span>
+                )}
+              </label>
               <div className="relative">
                 <DollarSign size={14} className="absolute left-3 top-3 text-zinc-500" />
                 <input
@@ -169,6 +226,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onCl
                   onChange={e => setFormData({ ...formData, price: e.target.value })}
                   className="w-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-2.5 pl-9 pr-3 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-colors"
                 />
+                {isFetchingPrice && (
+                  <div className="absolute right-3 top-3 animate-spin text-zinc-400">
+                    <RefreshCw size={14} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
