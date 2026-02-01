@@ -30,8 +30,8 @@ export const RecentActivityWidget: React.FC = () => {
                         <div key={tx.id} className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-zinc-900/40 border border-zinc-100 dark:border-white/5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isExpense
-                                        ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
-                                        : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600'
+                                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                                    : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600'
                                     }`}>
                                     <Icon size={18} strokeWidth={2} />
                                 </div>
@@ -49,8 +49,12 @@ export const RecentActivityWidget: React.FC = () => {
                 })}
 
                 {recentTx.length === 0 && (
-                    <div className="text-center py-8 text-zinc-400 text-sm">
-                        Chưa có giao dịch nào
+                    <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-2xl bg-zinc-50/50 dark:bg-white/5">
+                        <div className="p-3 rounded-full bg-zinc-200 dark:bg-white/10 mb-3 text-zinc-400 dark:text-white/40">
+                            <Store size={24} strokeWidth={1.5} />
+                        </div>
+                        <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400">Chưa có giao dịch</p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">Các giao dịch mới sẽ xuất hiện tại đây</p>
                     </div>
                 )}
             </div>

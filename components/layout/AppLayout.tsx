@@ -45,8 +45,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onVi
                                 key={item.id}
                                 onClick={() => onViewChange(item.id)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
-                                        ? 'bg-primary/10 text-primary font-bold'
-                                        : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white'
+                                    ? 'bg-primary/10 text-primary font-bold'
+                                    : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white'
                                     }`}
                             >
                                 <item.icon size={20} className={isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'} />
@@ -56,14 +56,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onVi
                         );
                     })}
 
-                    {/* Quick Add Button in Sidebar */}
-                    <button
-                        onClick={onAddClick}
-                        className="w-full flex items-center gap-3 px-4 py-3 mt-4 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-0.5 transition-all text-sm"
-                    >
-                        <Plus size={20} strokeWidth={3} />
-                        <span>Giao dịch Mới</span>
-                    </button>
+
                 </nav>
 
                 {/* Footer / Settings */}

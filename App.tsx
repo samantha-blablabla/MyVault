@@ -16,12 +16,28 @@ const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState('overview');
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [expenseModalData, setExpenseModalData] = useState<{ type: any } | undefined>(undefined);
 
   const { addTransaction, addDailyTransaction, logout } = useFinance();
 
+  const handleOpenExpense = () => {
+    setExpenseModalData({ type: 'EXPENSE' }); // Simplified type passing
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleOpenIncome = () => {
+    setExpenseModalData({ type: 'INCOME' });
+    setIsExpenseModalOpen(true);
+  };
+
   const renderView = () => {
     switch (activeView) {
-      case 'overview': return <OverviewView />;
+      case 'overview': return (
+        <OverviewView
+          onOpenIncome={handleOpenIncome}
+          onOpenExpense={handleOpenExpense}
+        />
+      );
       case 'assets': return <AssetsView />;
       case 'planning': return <PlanningView />;
       case 'history': return <HistoryView />;
@@ -33,7 +49,7 @@ const AppContent: React.FC = () => {
     <AppLayout
       activeView={activeView}
       onViewChange={setActiveView}
-      onAddClick={() => setIsExpenseModalOpen(true)}
+      onAddClick={handleOpenExpense}
       onLogout={logout}
     >
       {renderView()}
@@ -49,6 +65,7 @@ const AppContent: React.FC = () => {
         isOpen={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
         onSubmit={addDailyTransaction}
+        initialData={expenseModalData as any}
       />
     </AppLayout>
   );

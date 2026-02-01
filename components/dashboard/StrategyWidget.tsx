@@ -222,7 +222,7 @@ export const StrategyWidget: React.FC = () => {
                                 <div className="text-[10px] uppercase font-bold text-primary opacity-80">Kết quả tái cơ cấu</div>
                                 <div className="text-lg font-black text-primary">{estimatedNewShares} <span className="text-xs font-bold text-zinc-500 dark:text-white">cp {buySymbol}</span></div>
                             </div>
-                            <button className="bg-primary text-black p-3 rounded-lg shadow-hard-sm hover:translate-y-0.5 hover:shadow-none transition-all">
+                            <button className="bg-primary text-white p-3 rounded-lg shadow-hard-sm hover:translate-y-0.5 hover:shadow-none transition-all">
                                 <Calculator size={20} strokeWidth={2.5} />
                             </button>
                         </div>

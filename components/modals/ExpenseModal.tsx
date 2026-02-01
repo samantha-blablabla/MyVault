@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, Camera, Coffee, CreditCard, ShoppingBag, ArrowUpCircle, ArrowDownCircle, Gift, Banknote, Sparkles, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { X, Check, Camera, Coffee, CreditCard, ShoppingBag, ArrowUpCircle, ArrowDownCircle, Gift, Banknote, Sparkles, Image as ImageIcon, Trash2, CalendarClock } from 'lucide-react';
 import { formatCurrency } from '../../services/dataService';
 import { TransactionType } from '../../types';
-
+import { useFinance } from '../../context/FinanceContext';
 import { GoogleGenAI, Type } from "@google/genai";
 
 interface ExpenseModalProps {
@@ -17,11 +17,16 @@ interface ExpenseModalProps {
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
+    const { addBill } = useFinance();
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
     const [type, setType] = useState<TransactionType.EXPENSE | TransactionType.INCOME>(TransactionType.EXPENSE);
     const [isScanning, setIsScanning] = useState(false);
     const [scannedImage, setScannedImage] = useState<string | null>(null);
+
+    // Fixed Bill State
+    const [isFixedBill, setIsFixedBill] = useState(false);
+    const [dueDay, setDueDay] = useState(1);
 
     // Ref for the hidden file input
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,8 +35,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
-                setAmount(initialData.amount.toString());
-                setNote(initialData.note);
+                setAmount(initialData.amount?.toString() || '');
+                setNote(initialData.note || '');
                 setType(initialData.type === TransactionType.INCOME ? TransactionType.INCOME : TransactionType.EXPENSE);
             } else {
                 resetForm();
@@ -50,6 +55,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
         setNote('');
         setType(TransactionType.EXPENSE);
         setScannedImage(null);
+        setIsFixedBill(false);
+        setDueDay(1);
     };
 
     if (!isOpen) return null;
@@ -57,7 +64,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount) return;
-        onSubmit(Number(amount), note, type);
+
+        if (type === TransactionType.EXPENSE && isFixedBill) {
+            // Add as Fixed Bill
+            addBill(note || 'Hóa đơn mới', Number(amount), Number(dueDay));
+        } else {
+            // Add as Normal Transaction
+            onSubmit(Number(amount), note, type);
+        }
         onClose();
     };
 
@@ -277,12 +291,51 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onS
                         />
                     </div>
 
+                    {/* Fixed Bill Toggle (Only for Expense) */}
+                    {isExpense && (
+                        <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isFixedBill ? 'bg-primary border-primary text-white' : 'border-zinc-300 dark:border-zinc-600'}`}>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={isFixedBill}
+                                            onChange={e => setIsFixedBill(e.target.checked)}
+                                        />
+                                        {isFixedBill && <Check size={14} strokeWidth={3} />}
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Đây là Hóa đơn cố định?</span>
+                                </label>
+                                <CalendarClock size={16} className="text-zinc-400" />
+                            </div>
+
+                            {isFixedBill && (
+                                <div className="space-y-1 animate-fade-in text-sm">
+                                    <div className="flex justify-between text-xs text-zinc-500 font-bold uppercase">
+                                        <span>Ngày đến hạn hàng tháng</span>
+                                        <span className="text-primary font-black text-lg">{dueDay}</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="31"
+                                        value={dueDay}
+                                        onChange={e => setDueDay(Number(e.target.value))}
+                                        className="w-full h-1 bg-zinc-200 dark:bg-black rounded-lg appearance-none cursor-pointer accent-primary"
+                                    />
+                                    <p className="text-[10px] text-zinc-400 italic">Bill sẽ tự động trừ vào hạn mức chi tiêu hàng tháng.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Submit */}
                     <button
                         type="submit"
                         className={`w-full font-black text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-lg ${isExpense
-                                ? 'bg-white text-black border-2 border-black hover:bg-zinc-100 dark:bg-white dark:text-black dark:border-transparent'
-                                : 'bg-emerald-500 text-white hover:bg-emerald-600'
+                            ? 'bg-white text-black border-2 border-black hover:bg-zinc-100 dark:bg-white dark:text-black dark:border-transparent'
+                            : 'bg-emerald-500 text-white hover:bg-emerald-600'
                             }`}
                     >
                         <Check size={24} strokeWidth={3} />

@@ -27,7 +27,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({ onAddClick, 
               <button
                 key={item.id}
                 onClick={onAddClick}
-                className="relative -top-6 w-14 h-14 rounded-full bg-primary text-black shadow-[0_0_20px_rgba(202,252,1,0.6)] flex items-center justify-center transition-transform active:scale-95 hover:scale-110"
+                className="relative -top-6 w-14 h-14 rounded-full bg-primary text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center justify-center transition-transform active:scale-95 hover:scale-110"
               >
                 <Zap size={22} fill="currentColor" strokeWidth={2} />
               </button>
