@@ -2,13 +2,15 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { StockData, BudgetCategory, FixedBill, Transaction, UserState, TransactionType, ShoppingPlan } from '../types';
 import { INITIAL_BUDGET, MOCK_TRANSACTIONS, MARKET_PRICES, PRICE_HISTORY, FIXED_BILLS, TOTAL_INCOME } from '../constants';
 import { processPortfolioFromTransactions, calculateDailySpendable, calculateSpendingStats, calculateBudgetProgress } from '../services/financeLogic';
-import { getTransactions, saveTransaction, getMarketSignals } from '../services/dataService';
+import { getTransactions, saveTransaction, getMarketSignals, deleteTransaction as apiDeleteTransaction, updateTransaction as apiUpdateTransaction } from '../services/dataService';
 
 
 interface SpendingStats {
   day: number;
   month: number;
   year: number;
+  week: number;
+  lastWeek: number;
 }
 
 interface BudgetRules {
@@ -38,7 +40,7 @@ interface FinanceContextType {
   addTransaction: (tx: Transaction) => void;
   addDailyTransaction: (amount: number, note: string, type: TransactionType.EXPENSE | TransactionType.INCOME) => void;
   deleteTransaction: (id: string) => void;
-  editTransaction: (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => void;
+  editBill: (id: string, data: { name: string, amount: number, dueDay: number }) => void;
   updateBillStatus: (id: string, isPaid: boolean) => void;
   updateBillAmount: (id: string, amount: number) => void;
   addBill: (name: string, amount: number, dueDay: number, category?: FixedBill['category']) => void;
@@ -89,12 +91,13 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     safeParse('finvault_user', { isAuthenticated: false, name: '', totalNetWorth: 0 })
   );
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('finvault_transactions', MOCK_TRANSACTIONS));
+  // Transaction State (Migrated to v4 to force sync real data - Fixed HPG Price)
+  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('finvault_transactions_v4', MOCK_TRANSACTIONS));
   const [fixedBills, setFixedBills] = useState<FixedBill[]>(() => safeParse('finvault_bills', FIXED_BILLS));
   const [targets, setTargets] = useState<Record<string, number>>(() => safeParse('finvault_targets', DEFAULT_TARGETS));
 
   const [monthlyIncome, setMonthlyIncome] = useState<number>(() => {
-    return safeParse<number>('finvault_income', TOTAL_INCOME);
+    return safeParse<number>('finvault_income_v2', TOTAL_INCOME);
   });
 
   const [budgetRules, setBudgetRules] = useState<BudgetRules>(() => safeParse('finvault_budget_rules', DEFAULT_BUDGET_RULES));
@@ -108,16 +111,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [portfolio, setPortfolio] = useState<StockData[]>([]);
   const [dailySpendable, setDailySpendable] = useState(0);
   const [daysRemaining, setDaysRemaining] = useState(0);
-  const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0 });
+  const [spendingStats, setSpendingStats] = useState<SpendingStats>({ day: 0, month: 0, year: 0, week: 0, lastWeek: 0 });
 
   const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
 
   // --- PERSISTENCE ---
-  useEffect(() => { localStorage.setItem('finvault_user', JSON.stringify(user)); }, [user]); // Persist User
-  useEffect(() => { localStorage.setItem('finvault_transactions', JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { localStorage.setItem('finvault_user', JSON.stringify(user)); }, [user]);
+  useEffect(() => { localStorage.setItem('finvault_transactions_v4', JSON.stringify(transactions)); }, [transactions]); // v4
   useEffect(() => { localStorage.setItem('finvault_bills', JSON.stringify(fixedBills)); }, [fixedBills]);
   useEffect(() => { localStorage.setItem('finvault_targets', JSON.stringify(targets)); }, [targets]);
-  useEffect(() => { localStorage.setItem('finvault_income', JSON.stringify(monthlyIncome)); }, [monthlyIncome]);
+  useEffect(() => { localStorage.setItem('finvault_income_v2', JSON.stringify(monthlyIncome)); }, [monthlyIncome]);
   useEffect(() => { localStorage.setItem('finvault_budget_rules', JSON.stringify(budgetRules)); }, [budgetRules]);
   useEffect(() => { localStorage.setItem('finvault_privacy', JSON.stringify(isPrivacyMode)); }, [isPrivacyMode]);
   useEffect(() => { localStorage.setItem('finvault_shopping_plan', JSON.stringify(shoppingPlan)); }, [shoppingPlan]);
@@ -129,15 +132,19 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     localStorage.removeItem('finvault_theme');
   }, []);
 
-  // --- API ---
+  // --- API & DATA SYNC ---
   useEffect(() => {
     const fetchApiData = async () => {
       try {
+        // 1. Fetch Remote Data (if any)
         const [remoteTransactions, marketSignals] = await Promise.all([
           getTransactions(),
           getMarketSignals()
         ]);
+
         if (remoteTransactions && remoteTransactions.length > 0) setTransactions(remoteTransactions);
+
+        // Data Loaded
         if (marketSignals && marketSignals.length > 0) {
           const priceMap: Record<string, number> = {};
           marketSignals.forEach((s: any) => { priceMap[s.symbol] = s.price; });
@@ -218,7 +225,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const addTransaction = (tx: Transaction) => {
-    setTransactions(prev => [...prev, tx]);
+    setTransactions(prev => [tx, ...prev]);
     saveTransaction(tx);
   };
 
@@ -232,18 +239,25 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       price: amount,
       notes: note
     };
-    setTransactions(prev => [...prev, newTx]);
+    setTransactions(prev => [newTx, ...prev]);
     saveTransaction(newTx);
   };
 
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
+    apiDeleteTransaction(id);
   };
 
   const editTransaction = (id: string, updatedData: { amount: number, note: string, type: TransactionType }) => {
+    const updatedTx: Transaction | undefined = transactions.find(t => t.id === id);
+    if (!updatedTx) return;
+
+    const newTx = { ...updatedTx, price: updatedData.amount, notes: updatedData.note, type: updatedData.type, symbol: updatedData.type === TransactionType.INCOME ? 'IN' : 'EXP' };
+
     setTransactions(prev => prev.map(t =>
-      t.id === id ? { ...t, price: updatedData.amount, notes: updatedData.note, type: updatedData.type, symbol: updatedData.type === TransactionType.INCOME ? 'IN' : 'EXP' } : t
+      t.id === id ? newTx : t
     ));
+    apiUpdateTransaction(newTx);
   };
 
   const updateBillStatus = (id: string, isPaid: boolean) => {
@@ -252,6 +266,12 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const updateBillAmount = (id: string, amount: number) => {
     setFixedBills(prev => prev.map(bill => bill.id === id ? { ...bill, amount } : bill));
+  };
+
+  const editBill = (id: string, data: { name: string, amount: number, dueDay: number }) => {
+    setFixedBills(prev => prev.map(bill =>
+      bill.id === id ? { ...bill, ...data } : bill
+    ));
   };
 
   const addBill = (name: string, amount: number, dueDay: number, category: FixedBill['category'] = 'other') => {
@@ -311,6 +331,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       editTransaction,
       updateBillStatus,
       updateBillAmount,
+      editBill,
       addBill,
       removeBill,
       updateTarget,

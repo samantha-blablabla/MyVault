@@ -73,15 +73,34 @@ export const calculateSpendingStats = (transactions: Transaction[]) => {
     const currentMonth = today.getMonth(); // 0-indexed
     const currentDate = today.getDate();
 
+    // Get Monday of current week
+    const dayOfWeek = today.getDay(); // 0 is Sunday
+    const diffToMonday = (dayOfWeek + 6) % 7; // Calculate how far back Monday is
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    // Get Monday of last week
+    const lastMonday = new Date(monday);
+    lastMonday.setDate(monday.getDate() - 7);
+
+    // End of last week (Sunday 23:59:59)
+    const lastSunday = new Date(monday);
+    lastSunday.setDate(monday.getDate() - 1);
+    lastSunday.setHours(23, 59, 59, 999);
+
     let day = 0;
     let month = 0;
     let year = 0;
+    let week = 0;
+    let lastWeek = 0;
 
     transactions.forEach(tx => {
         if (tx.type === TransactionType.EXPENSE) {
             const txDate = new Date(tx.date);
             const amount = tx.price;
 
+            // Year
             if (txDate.getFullYear() === currentYear) {
                 year += amount;
                 if (txDate.getMonth() === currentMonth) {
@@ -91,10 +110,18 @@ export const calculateSpendingStats = (transactions: Transaction[]) => {
                     }
                 }
             }
+
+            // Week Logic
+            // Note: We use strict timestamp comparison for weeks to handle year boundaries correctly
+            if (txDate >= monday) {
+                week += amount;
+            } else if (txDate >= lastMonday && txDate <= lastSunday) {
+                lastWeek += amount;
+            }
         }
     });
 
-    return { day, month, year };
+    return { day, month, year, week, lastWeek };
 };
 
 /**
@@ -186,11 +213,12 @@ export const getFinancialAdvice = (historyData: any[], currentBudgetRules: any) 
  * Calculates MAC (Moving Average Cost) and Total Quantity from transaction history.
  * Now accepts 'targets' as a parameter to allow dynamic updates from UI.
  */
+// ...
 export const processPortfolioFromTransactions = (
     transactions: Transaction[],
-    marketPrices: Record<string, number>,
+    marketPrices: Record<string, any>, // Accepts number or { price, change, changePercent }
     priceHistory: Record<string, number[]>,
-    targets: Record<string, number> // ADDED: Dynamic Targets
+    targets: Record<string, number>
 ): StockData[] => {
     const portfolioMap = new Map<string, StockData>();
 
@@ -208,30 +236,49 @@ export const processPortfolioFromTransactions = (
         // IGNORE EXPENSES and INCOME in Portfolio Calculation
         if (tx.type === TransactionType.EXPENSE || tx.type === TransactionType.INCOME) return;
 
+        // Resolve Price and Change
+        const quote = marketPrices[tx.symbol];
+        let currentPrice = 0;
+        let dayChange = 0;
+        let dayChangePercent = 0;
+
+        if (typeof quote === 'number') {
+            currentPrice = quote;
+        } else if (quote) {
+            currentPrice = quote.price || 0;
+            dayChange = quote.change || 0;
+            dayChangePercent = quote.changePercent || 0;
+        }
+
         if (!portfolioMap.has(tx.symbol)) {
             portfolioMap.set(tx.symbol, {
                 symbol: tx.symbol,
                 name: names[tx.symbol] || tx.symbol,
                 quantity: 0,
                 avgPrice: 0,
-                currentPrice: marketPrices[tx.symbol] || 0,
+                currentPrice: currentPrice,
+                dayChange: dayChange,          // NEW
+                dayChangePercent: dayChangePercent, // NEW
                 // Synthetic History Generation for UI Aesthetics
                 history: (priceHistory[tx.symbol] && priceHistory[tx.symbol].length > 0)
                     ? priceHistory[tx.symbol]
                     : Array.from({ length: 20 }, (_, i) => {
-                        const price = marketPrices[tx.symbol] || 10000;
-                        // Generate a random wavy line ending at current price
-                        // Trend based on index: generally moving towards current price?
-                        // Just random noise around the price is enough for 'sparkline'
+                        const price = currentPrice || 10000;
                         const noise = (Math.random() - 0.5) * (price * 0.05);
                         return price + noise;
                     }),
                 type: assetTypes[tx.symbol] || AssetType.Stock,
-                targetQuantity: targets[tx.symbol] || 0 // Use dynamic target
+                targetQuantity: targets[tx.symbol] || 0
             });
         }
 
         const stock = portfolioMap.get(tx.symbol)!;
+
+        // Update Price/Change on every pass (in case txs are mixed, though map is unique by symbol)
+        // Actually map is Init once. But ensure we have latest price.
+        stock.currentPrice = currentPrice;
+        stock.dayChange = dayChange;
+        stock.dayChangePercent = dayChangePercent;
 
         if (tx.type === TransactionType.BUY) {
             // Logic: New Avg = ((Old Qty * Old Avg) + (New Qty * Buy Price)) / Total Qty

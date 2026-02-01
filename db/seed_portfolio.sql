@@ -10,11 +10,11 @@ DELETE FROM market_signals;
 -- VNDAF: 202.82 ccq, Price 19721
 
 INSERT INTO transactions (id, user_id, date, symbol, type, quantity, price, notes) VALUES
-('seed-tcb', 'user-default', '2024-01-01T00:00:00Z', 'TCB', 'BUY', 100, 35784, 'Initial Transaction'),
-('seed-hpg', 'user-default', '2024-01-01T00:00:00Z', 'HPG', 'BUY', 20, 26600, 'Initial Transaction'),
-('seed-mbb', 'user-default', '2024-01-01T00:00:00Z', 'MBB', 'BUY', 100, 27210, 'Initial Transaction'),
-('seed-dfix', 'user-default', '2024-01-01T00:00:00Z', 'DFIX', 'BUY', 167.52, 11938, 'Initial Transaction'),
-('seed-vndaf', 'user-default', '2024-01-01T00:00:00Z', 'VNDAF', 'BUY', 202.82, 19721, 'Initial Transaction');
+('seed-tcb', 'user-default', '2024-01-01T00:00:00Z', 'TCB', 'BUY', 100, 35784, 'Sync from Trading App'),
+('seed-hpg', 'user-default', '2024-01-01T00:00:00Z', 'HPG', 'BUY', 20, 26600, 'Sync from Trading App'),
+('seed-mbb', 'user-default', '2024-01-01T00:00:00Z', 'MBB', 'BUY', 100, 27210, 'Sync from Trading App'),
+('seed-dfix', 'user-default', '2024-01-01T00:00:00Z', 'DFIX', 'BUY', 167.52, 11968, 'Dragon Capital Funds'),
+('seed-vndaf', 'user-default', '2024-01-01T00:00:00Z', 'VNDAF', 'BUY', 202.82, 19910, 'VNDirect Active Fund');
 
 -- Seed Market Signals (Current Prices)
 -- TCB: 35.900, +0.32%

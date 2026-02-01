@@ -5,7 +5,7 @@ import { PlanningView } from './components/views/PlanningView';
 import { HistoryView } from './components/views/HistoryView';
 
 import { Login } from './components/auth/Login';
-import { UserState } from './types';
+import { UserState, Transaction, TransactionType } from './types';
 import { FinanceProvider, useFinance } from './context/FinanceContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppLayout } from './components/layout/AppLayout';
@@ -16,18 +16,41 @@ const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState('overview');
   const [isTransModalOpen, setIsTransModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
-  const [expenseModalData, setExpenseModalData] = useState<{ type: any } | undefined>(undefined);
+  const [expenseModalData, setExpenseModalData] = useState<{ id?: string, amount?: number, note?: string, type: TransactionType } | undefined>(undefined);
 
-  const { addTransaction, addDailyTransaction, logout } = useFinance();
+  const { addTransaction, addDailyTransaction, logout, editTransaction } = useFinance();
 
   const handleOpenExpense = () => {
-    setExpenseModalData({ type: 'EXPENSE' }); // Simplified type passing
+    setExpenseModalData({ type: TransactionType.EXPENSE }); // Simplified type passing
     setIsExpenseModalOpen(true);
   };
 
   const handleOpenIncome = () => {
-    setExpenseModalData({ type: 'INCOME' });
+    setExpenseModalData({ type: TransactionType.INCOME });
     setIsExpenseModalOpen(true);
+  };
+
+  const handleEditTransaction = (tx: Transaction) => {
+    setExpenseModalData({
+      id: tx.id,
+      amount: tx.price,
+      note: tx.notes,
+      type: tx.type
+    });
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleExpenseSubmit = (amount: number, note: string, type: TransactionType) => {
+    if (expenseModalData && expenseModalData.id) {
+      editTransaction(expenseModalData.id, { amount, note, type });
+    } else {
+      addDailyTransaction(amount, note, type);
+    }
+    setIsExpenseModalOpen(false);
+  };
+
+  const handleViewHistory = () => {
+    setActiveView('history');
   };
 
   const renderView = () => {
@@ -36,6 +59,8 @@ const AppContent: React.FC = () => {
         <OverviewView
           onOpenIncome={handleOpenIncome}
           onOpenExpense={handleOpenExpense}
+          onEditTransaction={handleEditTransaction}
+          onViewHistory={handleViewHistory}
         />
       );
       case 'investment': return <AssetsView />;

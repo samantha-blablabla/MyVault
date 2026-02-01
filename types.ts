@@ -39,6 +39,8 @@ export interface StockData {
   targetQuantity?: number; // e.g., 100 for TCB/MBB
   avgPrice: number; // Calculated MAC
   currentPrice: number;
+  dayChange?: number; // New: Value change vs Yesterday
+  dayChangePercent?: number; // New: % change vs Yesterday
   history: number[]; // Array of prices for sparkline (7 days)
   type: AssetType;
   marketValue?: number;
@@ -62,8 +64,8 @@ export interface UserState {
 }
 
 export interface ShoppingPlan {
-    name: string;
-    price: number;
-    fundSource: 'savings' | 'invest'; // Which budget bucket to use
-    monthlyContribution: number; // How much to set aside per month
+  name: string;
+  price: number;
+  fundSource: 'savings' | 'invest'; // Which budget bucket to use
+  monthlyContribution: number; // How much to set aside per month
 }

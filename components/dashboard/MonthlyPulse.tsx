@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useFinance } from '../../context/FinanceContext';
+import { TransactionType } from '../../types';
 import { GlassCard } from '../ui/GlassCard';
 import { ArrowDownAZ, ArrowUpAZ, PiggyBank, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { formatCurrency } from '../../services/dataService';
@@ -20,12 +21,12 @@ export const MonthlyPulse: React.FC = () => {
         });
 
         const income = monthlyTx
-            .filter(t => t.amount > 0 && t.type !== 'transfer') // Assuming > 0 is income if not transfer, or check type if strictly defined
-            .reduce((sum, t) => sum + t.amount, 0);
+            .filter(t => t.type === TransactionType.INCOME)
+            .reduce((sum, t) => sum + t.price, 0);
 
         const expenses = monthlyTx
-            .filter(t => t.amount < 0 && t.type !== 'transfer')
-            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            .filter(t => t.type === TransactionType.EXPENSE)
+            .reduce((sum, t) => sum + t.price, 0);
 
         // Budget Cap (Sum of all category allocations)
         const totalBudget = budget.reduce((sum, b) => sum + b.allocated, 0);
@@ -41,7 +42,8 @@ export const MonthlyPulse: React.FC = () => {
     // Hardcoded Income for Demo if 0 (since we don't have income tx logic fully separate usually)
     // Actually FinanceContext might not have explicit income transactions yet, usually 'budget' implies allocated income.
     // Let's rely on constants.TOTAL_INCOME if stats.income is 0 for better UI visualization
-    const displayIncome = stats.income > 0 ? stats.income : 50000000; // Fallback to assumed income
+    // Use actual income stats
+    const displayIncome = stats.income;
     const savings = displayIncome - stats.expenses;
     const savingsRate = Math.round((savings / displayIncome) * 100);
 

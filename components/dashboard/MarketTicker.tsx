@@ -18,8 +18,8 @@ export const MarketTicker: React.FC = () => {
             setIndices(data);
         };
         load();
-        // Refresh every minute (conceptually)
-        const interval = setInterval(load, 60000);
+        // Refresh every 5 seconds to show "Live" jumping effect
+        const interval = setInterval(load, 5000);
         return () => clearInterval(interval);
     }, []);
 
@@ -34,7 +34,7 @@ export const MarketTicker: React.FC = () => {
                         <span className="font-bold text-zinc-400">{index.symbol}</span>
                         <span className="text-white font-bold">{index.value.toLocaleString()}</span>
                         <span className={`flex items-center gap-0.5 ${index.change > 0 ? 'text-emerald-500' :
-                                index.change < 0 ? 'text-rose-500' : 'text-zinc-500'
+                            index.change < 0 ? 'text-rose-500' : 'text-zinc-500'
                             }`}>
                             {index.change > 0 ? <TrendingUp size={10} /> : index.change < 0 ? <TrendingDown size={10} /> : <Minus size={10} />}
                             {index.percentChange > 0 ? '+' : ''}{index.percentChange}%

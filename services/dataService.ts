@@ -38,6 +38,36 @@ export const saveTransaction = async (transaction: any) => {
   }
 };
 
+export const deleteTransaction = async (id: string) => {
+  try {
+    // Assuming backend supports DELETE with query param or body
+    const response = await fetch(`${API_BASE_URL}/transactions?id=${id}`, {
+      method: 'DELETE',
+    });
+    // If backend doesn't support DELETE yet, this will fail. We need to implement DELETE in backend too.
+    if (!response.ok) throw new Error('Failed to delete');
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to delete from D1", error);
+    throw error;
+  }
+};
+
+export const updateTransaction = async (transaction: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(transaction)
+    });
+    if (!response.ok) throw new Error('Failed to update');
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to update D1", error);
+    throw error;
+  }
+};
+
 
 // --- UTILS ---
 
@@ -55,12 +85,22 @@ export const getMarketSignals = async (): Promise<any[]> => {
 
 // --- UTILS ---
 
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number | string | undefined): string => {
+  if (amount === undefined || amount === null) return '0 ₫';
+  const num = Number(amount);
+  if (isNaN(num)) return '0 ₫';
+
+  // Round to integer for standard display, but keep decimals for small fund prices if needed? 
+  // Standard VND doesn't usually show cents.
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(amount);
+    maximumFractionDigits: 0
+  }).format(num);
+};
+
+export const formatNumber = (num: number): string => {
+  return new Intl.NumberFormat('vi-VN').format(num);
 };
 
 export const getStockPrice = (symbol: string): number => {

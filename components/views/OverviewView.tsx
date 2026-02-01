@@ -7,12 +7,16 @@ import { RecentActivityWidget } from '../dashboard/RecentActivityWidget';
 import { Plus } from 'lucide-react';
 
 
+import { Transaction } from '../../types';
+
 interface OverviewViewProps {
     onOpenIncome?: () => void;
     onOpenExpense?: () => void;
+    onEditTransaction?: (tx: Transaction) => void;
+    onViewHistory?: () => void;
 }
 
-export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenIncome, onOpenExpense }) => {
+export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenIncome, onOpenExpense, onEditTransaction, onViewHistory }) => {
     const { user } = useFinance();
 
     return (
@@ -54,7 +58,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenIncome, onOpen
                     </div>
 
                     {/* Recent Activity (New) */}
-                    < RecentActivityWidget />
+                    <RecentActivityWidget onEditTransaction={onEditTransaction} onViewHistory={onViewHistory} />
                 </div>
 
                 {/* RIGHT COLUMN (1/3) */}

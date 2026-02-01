@@ -1,0 +1,53 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/coingecko/:path*",
+      "mountPath": "/api/coingecko",
+      "method": "",
+      "module": [
+        "api/coingecko/[[path]].js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/vndirect/:path*",
+      "mountPath": "/api/vndirect",
+      "method": "",
+      "module": [
+        "api/vndirect/[[path]].js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/signals",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/signals.ts:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/signals",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/signals.ts:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/transactions",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/transactions.ts:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/transactions",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/transactions.ts:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}
